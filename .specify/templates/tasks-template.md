@@ -8,9 +8,29 @@ description: "Task list template for feature implementation"
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: Tests are MANDATORY. For every story, write tests first and ensure they fail before implementation (Test-First).
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+
+## Constitution Validation Checkpoints (MANDATORY)
+
+- Every user-story task set MUST include test tasks before implementation tasks.
+- Every new module/library MUST include at least one CLI contract and CLI test task.
+- Every implementation task MUST reference one or more `spec.md` requirement IDs.
+- Any ambiguity in task text MUST include `[NEEDS CLARIFICATION]` and block implementation.
+- Any non-trivial abstraction task MUST include a paired `Complexity Tracking` justification task.
+- API error-handling tasks MUST enforce FHIR `OperationOutcome`.
+- Audit-related tasks MUST preserve append-only behavior (no UPDATE/DELETE for service accounts).
+- Any new API endpoint MUST include an explicit task named `Verificacao de Quotas`.
+- Task set MUST include observability tasks for trace propagation and tenant-context JSON logs.
+- Task set MUST include drift-verification integration in CI/CD before merge.
+- For Kafka/RabbitMQ changes, task set MUST include explicit `Schema Compatibility Check`.
+- For external integrations, task set MUST include explicit `Fallback Strategy` implementation task.
+- Task set MUST include RBAC mapping and service-layer permission enforcement tasks.
+- Task set MUST include Sanitization and Validation Gate tasks for each ingress boundary.
+- Before marking any task complete, agent MUST execute checklist-based self-verification.
+- Complex technology/integration efforts MUST include `research.md` validation tasks.
+- Incident/QA fixes MUST include `spec.md` Edge Cases update tasks before code fixes.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -68,6 +88,11 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T007 Create base models/entities that all stories depend on
 - [ ] T008 Configure error handling and logging infrastructure
 - [ ] T009 Setup environment configuration management
+- [ ] T009a Configure CI drift verification (e.g., `spec-kit-verify-tasks`) as merge blocker
+- [ ] T009b Configure SBOM generation in CI/CD for release artifacts
+- [ ] T009c Define centralized RBAC policy map (roles, permissions, clinical scopes)
+- [ ] T009d Define shared Sanitization and Validation Gate for ingress adapters
+- [ ] T009e Validate `research.md` is present for new technologies/complex integrations
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -79,21 +104,28 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (MANDATORY) ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py (refs: FR-XXX)
+- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py (refs: FR-XXX)
+- [ ] T011a [P] [US1] CLI contract test for [library command] in tests/contract/test_cli_[name].py (refs: FR-XXX)
 
 ### Implementation for User Story 1
 
 - [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
 - [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
 - [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py (refs: FR-XXX)
+- [ ] T016 [US1] Add validation and FHIR OperationOutcome error handling (refs: FR-XXX)
+- [ ] T017 [US1] Add tracing + tenant-context JSON logging for user story 1 operations (refs: FR-XXX)
+- [ ] T017a [US1] Verificacao de Quotas for new API endpoint(s) based on tenant_id (refs: FR-XXX)
+- [ ] T017b [US1] Schema Compatibility Check for Kafka/RabbitMQ message changes (refs: FR-XXX)
+- [ ] T017c [US1] Implement Fallback Strategy (circuit breaker + retry + outbox when applicable) for external integrations (refs: FR-XXX)
+- [ ] T017d [US1] Implement service-layer RBAC checks for clinical permissions (refs: FR-XXX)
+- [ ] T017e [US1] Apply Sanitization and Validation Gate to inbound payloads (FHIR/DTO) (refs: FR-XXX)
+- [ ] T017f [US1] Run /speckit.checklist consistency verification before closing US1 tasks (refs: FR-XXX)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -105,10 +137,10 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (MANDATORY) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py (refs: FR-XXX)
+- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py (refs: FR-XXX)
 
 ### Implementation for User Story 2
 
@@ -127,10 +159,10 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (MANDATORY) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py (refs: FR-XXX)
+- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py (refs: FR-XXX)
 
 ### Implementation for User Story 3
 
@@ -155,6 +187,13 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
+- [ ] TXXX Run Schema Compatibility Check reports and attach evidence
+- [ ] TXXX Validate Fallback Strategy behavior under dependency failure scenarios
+- [ ] TXXX Validate RBAC coverage report and permission audit logs
+- [ ] TXXX Validate boundary sanitization/validation rejection paths
+- [ ] TXXX Execute /speckit.checklist before final task closure
+- [ ] TXXX Confirm SBOM is configured and generated for each new module introduced
+- [ ] TXXX Validate incident/QA fixes updated `spec.md` Edge Cases before code changes
 - [ ] TXXX Run quickstart.md validation
 
 ---
@@ -178,7 +217,18 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Within Each User Story
 
-- Tests (if included) MUST be written and FAIL before implementation
+- Tests MUST be written and FAIL before implementation
+- CLI contract and CLI tests MUST exist for new libraries/modules
+- Each implementation task MUST reference requirement IDs from `spec.md`
+- Ambiguous tasks MUST be marked `[NEEDS CLARIFICATION]` and resolved first
+- Every new API endpoint MUST have an explicit `Verificacao de Quotas` task
+- Observability tasks MUST include `trace_id` propagation and tenant-context logs
+- Event-driven changes MUST include `Schema Compatibility Check`
+- External integrations MUST include `Fallback Strategy` task
+- Service-layer RBAC mapping MUST exist for each exposed clinical capability
+- Boundary Sanitization and Validation Gate MUST exist for each ingress channel
+- New technology/integration work MUST include a `research.md` validation task
+- Incident/QA fixes MUST update `spec.md` Edge Cases before fix implementation
 - Models before services
 - Services before endpoints
 - Core implementation before integration
@@ -198,7 +248,7 @@ Examples of foundational tasks (adjust based on your project):
 ## Parallel Example: User Story 1
 
 ```bash
-# Launch all tests for User Story 1 together (if tests requested):
+# Launch all mandatory tests for User Story 1 together:
 Task: "Contract test for [endpoint] in tests/contract/test_[name].py"
 Task: "Integration test for [user journey] in tests/integration/test_[name].py"
 
@@ -244,6 +294,14 @@ With multiple developers:
 
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
+- Add `(refs: FR-XXX)` to implementation tasks for spec traceability
+- Add explicit `Verificacao de Quotas` task for each new endpoint introduced
+- Add explicit `Schema Compatibility Check` for Kafka/RabbitMQ contract updates
+- Add explicit `Fallback Strategy` task for external dependency integrations
+- Add explicit RBAC service-permission mapping tasks
+- Add explicit Sanitization and Validation Gate tasks for data ingress
+- Run checklist-based self-verification before marking tasks as completed
+- Add final checkpoint verifying SBOM setup/generation for each new module
 - Each user story should be independently completable and testable
 - Verify tests fail before implementing
 - Commit after each task or logical group
