@@ -31,6 +31,10 @@ description: "Task list template for feature implementation"
 - Before marking any task complete, agent MUST execute checklist-based self-verification.
 - Complex technology/integration efforts MUST include `research.md` validation tasks.
 - Incident/QA fixes MUST include `spec.md` Edge Cases update tasks before code fixes.
+- Authentication and session management MUST be implemented entirely in-app; any task
+  introducing an external IdP, managed auth service, or third-party auth library
+  (Keycloak, Auth0, Okta, Cognito, Azure AD B2C, etc.) violates Principle XXII
+  and MUST be removed or blocked before the task set is approved.
 
 ## Format: `[ID] [P?] [Story] Description`
 

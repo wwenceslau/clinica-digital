@@ -1,24 +1,28 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change  : 1.4.0 → 1.5.0
-Bump Type       : MINOR — added final stabilization principles (XX–XXI), canonical
-                  external references, and final validation gates.
+Version Change  : 1.5.0 → 1.6.0
+Bump Type       : MINOR — added Principle XXII (Mandato de Segurança Nativa /
+                  In-App IAM), redefined Security Framework stack entry, added
+                  constitutional gate XXII to Development Workflow and templates.
 
 Modified Principles: None (existing principles preserved)
 
+Modified Stack Entry:
+  - Security Framework: 'Spring Security + OAuth2/OIDC (Keycloak or equivalent)'
+    → 'Spring Security + OAuth2 com camada de segurança interna (In-App Security Layer)'
+
 Added Principles:
-  - Principle XX  : Mandatory Research Before Complex Planning
-  - Principle XXI : Production Feedback Loop to Specification
+  - Principle XXII : Mandato de Segurança Nativa — In-App IAM
 
 Added Sections: None
 Removed Sections: None
 
 Templates Requiring Updates:
-  ✅ .specify/templates/plan-template.md — added gates for mandatory research and
-    production feedback loop to spec edge cases
-  ✅ .specify/templates/tasks-template.md — added final SBOM checkpoint for new
-    modules and checklist items for research/feedback compliance
+  ✅ .specify/templates/plan-template.md — added gate XXII (Native Security) and
+    updated constitution version reference to v1.6.0
+  ✅ .specify/templates/tasks-template.md — added checkpoint for in-app-only
+    authentication enforcement (Principle XXII)
   ✅ .specify/templates/spec-template.md — no changes required
   ✅ .specify/templates/commands/*.md — no files found
   ✅ README.md / docs/quickstart.md — no files found
@@ -406,6 +410,36 @@ Operational and QA learning MUST be codified in the specification before code fi
 **Rationale**: Persisting failures in the specification prevents knowledge loss and
 reduces recurrence of clinical defects.
 
+### XXII. Mandato de Segurança Nativa — In-App IAM (NON-NEGOTIABLE)
+
+Toda a lógica de autenticação, gestão de identidades (IAM), armazenamento de
+credenciais e controle de sessões DEVE ser desenvolvida e mantida exclusivamente
+dentro dos módulos da aplicação.
+
+- O uso de Identity Providers (IdP) externos, ferramentas de autenticação de
+  terceiros ou serviços gerenciados de autenticação (ex.: Keycloak, Auth0, Okta,
+  AWS Cognito, Azure AD B2C) é **ESTRITAMENTE PROIBIDO**.
+- A implementação interna de segurança DEVE ser nativamente ciente de tenants:
+  o isolamento de credenciais, tokens e sessões DEVE ser garantido desde o
+  primeiro contato na fronteira da aplicação, em total conformidade com o
+  Princípio 0 (Multi-Tenant Data Segregation).
+- Os dados sensíveis de autenticação (hashed credentials, tokens de sessão,
+  refresh tokens) DEVEM residir em tabelas exclusivas do banco de dados da
+  aplicação, sujeitas a RLS e às políticas de criptografia definidas no Princípio VI.
+- O isolamento por tenant DEVE ser aplicado na camada de sessão: nenhuma sessão
+  autenticada pode ser reutilizada, inferida ou partilhada entre tenants distintos
+  sob qualquer circunstância.
+- Qualquer proposta técnica que inclua ferramentas ou serviços externos de
+  autenticação DEVE ser automaticamente rejeitada por violação constitucional,
+  sem possibilidade de exceção.
+
+**Rationale**: Esta escolha visa eliminar dependências externas críticas, reduzir
+a complexidade de rede e garantir controle total sobre a soberania dos dados de
+acesso, conforme exigido pela LGPD em contextos de alta sensibilidade. Serviços
+de IAM externos criam vetores de dependência não controlados, pontos de falha
+fora da superfície de auditoria da aplicação, e riscos de transferência de dados
+para jurisdições não conformes com a LGPD.
+
 ## Technology Stack
 
 The following choices are canonical. Deviations MUST be ratified as a constitutional
@@ -424,7 +458,7 @@ amendment.
 |---|---|
 | Language / Runtime | Java 21+ |
 | Application Framework | Spring Boot 3.x |
-| Security Framework | Spring Security + OAuth2/OIDC (Keycloak or equivalent) |
+| Security Framework | Spring Security + OAuth2 com camada de segurança interna (In-App Security Layer) |
 | Persistence | PostgreSQL 15+ with Row-Level Security and pgcrypto |
 | FHIR Library | HAPI FHIR 7.x (client + server + validator) |
 | Build / Modules | Maven multi-module; one Maven module per library |
@@ -483,6 +517,9 @@ organisms, templates) to prevent duplicated interface logic and styling.
           with compatibility and risk analysis before plan approval.
         22. Incident/QA corrective changes update `spec.md` Edge Cases before code fix
           tasks are marked ready.
+        23. Any plan, module, or task proposing the use of an external IdP, managed
+          authentication service, or third-party auth library is automatically
+          rejected as a constitutional violation of Principle XXII.
 - **Code Review**: Reviewers MUST explicitly verify: multi-tenant isolation, test
   coverage above thresholds, CLI parity, traceability to spec, encryption of new
   PHI/PII fields, OperationOutcome conformance, observability contract evidence,
@@ -528,4 +565,4 @@ This constitution supersedes all other development guidelines within this projec
   stabilized architecture governance. Changes after this baseline SHOULD default
   to PATCH unless new mandatory governance is introduced.
 
-**Version**: 1.5.0 | **Ratified**: 2026-04-05 | **Last Amended**: 2026-04-05
+**Version**: 1.6.0 | **Ratified**: 2026-04-05 | **Last Amended**: 2026-04-05

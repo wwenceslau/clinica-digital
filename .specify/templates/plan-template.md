@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-> Source of truth: `.specify/memory/constitution.md` v1.5.0
+> Source of truth: `.specify/memory/constitution.md` v1.6.0
 
 | # | Gate | Status |
 |---|------|--------|
@@ -57,6 +57,7 @@
 | XIX | **Agent Self-Verification**: Checklist-based consistency verification is planned before marking tasks done. | ☐ |
 | XX | **Research Gate**: `research.md` exists for plans with new technologies/complex integrations and includes compatibility + risk analysis. | ☐ |
 | XXI | **Feedback Loop Gate**: Incident/QA fix plans update `spec.md` Edge Cases before implementation tasks proceed. | ☐ |
+| XXII | **Native Security (BLOCKING)**: Authentication, IAM, credential storage, and session control are implemented entirely in-app. Any use of external IdPs or managed auth services (Keycloak, Auth0, Okta, Cognito, Azure AD B2C, etc.) renders this plan **constitutionally invalid** and MUST be rejected without exception (Principle XXII). | ☐ |
 
 **Compliance Review Required**: [ ] YES — [ ] NO (if yes, tag reviewer and block merge until signed off)
 
