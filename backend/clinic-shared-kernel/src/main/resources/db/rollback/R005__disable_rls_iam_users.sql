@@ -1,0 +1,3 @@
+DROP POLICY IF EXISTS iam_users_tenant_isolation ON iam_users;
+ALTER TABLE iam_users NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE iam_users DISABLE ROW LEVEL SECURITY;

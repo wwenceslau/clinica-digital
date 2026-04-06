@@ -25,26 +25,26 @@
 
 ### Phase 1.A: Backend Maven e Shared Kernel
 
-- [ ] T001 Criar estrutura Maven multi-module com clinic-platform-bom (pom.xml raiz) em `backend/pom.xml`
-- [ ] T002 [P] Configurar clinic-shared-kernel module em `backend/clinic-shared-kernel/pom.xml` com classes base (TenantContext, TraceContext, DomainEvent, OperationOutcome)
-- [ ] T003 [P] Configurar clinic-tenant-core module em `backend/clinic-tenant-core/pom.xml`
-- [ ] T004 [P] Configurar clinic-iam-core module em `backend/clinic-iam-core/pom.xml`
-- [ ] T005 [P] Configurar clinic-observability-core module em `backend/clinic-observability-core/pom.xml`
-- [ ] T006 [P] Configurar clinic-gateway-app module em `backend/clinic-gateway-app/pom.xml` (Spring Boot entrypoint)
-- [ ] T007 [P] Configurar linting (SpotBugs, SonarQube) e testes (JUnit 5, Mockito) em profiles de build
-- [ ] T008 Integrar Testcontainers para testes de integração com PostgreSQL real em `backend/pom.xml`
+- [x] T001 Criar estrutura Maven multi-module com clinic-platform-bom (pom.xml raiz) em `backend/pom.xml`
+- [x] T002 [P] Configurar clinic-shared-kernel module em `backend/clinic-shared-kernel/pom.xml` com classes base (TenantContext, TraceContext, DomainEvent, OperationOutcome)
+- [x] T003 [P] Configurar clinic-tenant-core module em `backend/clinic-tenant-core/pom.xml`
+- [x] T004 [P] Configurar clinic-iam-core module em `backend/clinic-iam-core/pom.xml`
+- [x] T005 [P] Configurar clinic-observability-core module em `backend/clinic-observability-core/pom.xml`
+- [x] T006 [P] Configurar clinic-gateway-app module em `backend/clinic-gateway-app/pom.xml` (Spring Boot entrypoint)
+- [x] T007 [P] Configurar linting (SpotBugs, SonarQube) e testes (JUnit 5, Mockito) em profiles de build
+- [x] T008 Integrar Testcontainers para testes de integração com PostgreSQL real em `backend/pom.xml`
 
 ### Phase 1.B: Frontend React com Atomic Components
 
-- [ ] T009 [P] Criar estrutura React 19 + TypeScript em `frontend/` com Node 22
-- [ ] T010 [P] Configurar Tailwind CSS + MUI 7 em `frontend/package.json`
-- [ ] T011 [P] Criar pastas de componentes atômicos: `frontend/src/components/atoms/`, `molecules/`, `organisms/`, `templates/`
-- [ ] T012 [P] Configurar eslint, prettier, Vitest para frontend em `frontend/`
+- [x] T009 [P] Criar estrutura React 19 + TypeScript em `frontend/` com Node 22
+- [x] T010 [P] Configurar Tailwind CSS + MUI 7 em `frontend/package.json`
+- [x] T011 [P] Criar pastas de componentes atômicos: `frontend/src/components/atoms/`, `molecules/`, `organisms/`, `templates/`
+- [x] T012 [P] Configurar eslint, prettier, Vitest para frontend em `frontend/`
 
 ### Phase 1.C: Database e Migrations
 
-- [ ] T013 Configurar Flyway ou Liquibase em `backend/clinic-shared-kernel/src/main/resources/db/migration/` e criar `backend/clinic-gateway-app/src/main/resources/application-dev.yml.template` com placeholders `${DB_URL}`, `${DB_USER}`, `${DB_PASSWORD}` (sem segredos versionados, refs: Art. VI)
-- [ ] T014 Definir migration V001 para criação de tabela base `tenants` (sem RLS ainda, apenas schema) em `V001__create_tenants_table.sql`
+- [x] T013 Configurar Flyway ou Liquibase em `backend/clinic-shared-kernel/src/main/resources/db/migration/` e criar `backend/clinic-gateway-app/src/main/resources/application-dev.yml.template` com placeholders `${DB_URL}`, `${DB_USER}`, `${DB_PASSWORD}` (sem segredos versionados, refs: Art. VI)
+- [x] T014 Definir migration V001 para criação de tabela base `tenants` (sem RLS ainda, apenas schema) em `V001__create_tenants_table.sql`
 
 **Checkpoint**: Estrutura Maven + frontend pronta, tabelas base iniciadas
 
@@ -57,46 +57,58 @@
 
 ### Phase 2.A: Database Schema + RLS
 
-- [ ] T015 [P] Criar migration V002 para tabelas IAM base: `iam_users`, `iam_roles`, `iam_permissions`, `iam_user_roles` em `V002__create_iam_tables.sql` (refs: FR-005, FR-006, FR-006a)
-- [ ] T016 [P] Criar migration V003 para tabela `iam_sessions` com (id uuid, tenant_id, user_id, expires_at, revoked_at, ip, user_agent) em `V003__create_sessions_table.sql` (refs: FR-007, FR-010a)
-- [ ] T017 [P] Criar migration V004 para tabela `iam_audit_events` (append-only, sem update/delete) em `V004__create_audit_events_table.sql` (refs: FR-011, FR-012)
-- [ ] T018 [P] Criar migration V005 com RLS policies para `iam_users`: ENABLE RLS + FORCE RLS + POLICY for ALL using tenant_id em `V005__enable_rls_iam_users.sql` (refs: Art. 0, FR-001, FR-002)
-- [ ] T019 [P] Criar migration V006 com RLS policy para `iam_sessions` em `V006__enable_rls_iam_sessions.sql` (refs: Art. 0)
-- [ ] T020 [P] Criar migration V007 com RLS policy para `tenants` em `V007__enable_rls_tenants.sql` (refs: Art. 0)
-- [ ] T021 [P] Criar migration V008 com indices compostos (tenant_id, field) para perfomance em `V008__create_composite_indices.sql` (ex: iam_users(tenant_id, username), iam_sessions(tenant_id, expires_at)) (refs: research.md)
-- [ ] T022 Criar rollback scripts para migrations V001-V008 (obrigatório por constituição)
+- [x] T015 [P] Criar migration V002 para tabelas IAM base: `iam_users`, `iam_roles`, `iam_permissions`, `iam_user_roles` em `V002__create_iam_tables.sql` (refs: FR-005, FR-006, FR-006a)
+- [x] T016 [P] Criar migration V003 para tabela `iam_sessions` com (id uuid, tenant_id, user_id, expires_at, revoked_at, ip, user_agent) em `V003__create_sessions_table.sql` (refs: FR-007, FR-010a)
+- [x] T017 [P] Criar migration V004 para tabela `iam_audit_events` (append-only, sem update/delete) em `V004__create_audit_events_table.sql` (refs: FR-011, FR-012)
+- [x] T018 [P] Criar migration V005 com RLS policies para `iam_users`: ENABLE RLS + FORCE RLS + POLICY for ALL using tenant_id em `V005__enable_rls_iam_users.sql` (refs: Art. 0, FR-001, FR-002)
+- [x] T019 [P] Criar migration V006 com RLS policy para `iam_sessions` em `V006__enable_rls_iam_sessions.sql` (refs: Art. 0)
+- [x] T020 [P] Criar migration V007 com RLS policy para `tenants` em `V007__enable_rls_tenants.sql` (refs: Art. 0)
+- [x] T021 [P] Criar migration V008 com indices compostos (tenant_id, field) para perfomance em `V008__create_composite_indices.sql` (ex: iam_users(tenant_id, username), iam_sessions(tenant_id, expires_at)) (refs: research.md)
+- [x] T022 Criar rollback scripts para migrations V001-V008 (obrigatório por constituição). Formato: SQL idempotente, nomeado R00N__rollback_{descricao}.sql, contendo DROP POLICY / DISABLE RLS / DROP TABLE / DROP INDEX conforme o inverso exato da migration correspondente, de forma que executar R00N restaura o schema ao estado pre-V00N.
+- [x] T022a [P] Criar migration V009 com ENABLE FORCE RLS + policy FOR ALL para `iam_roles` em `V009__enable_rls_iam_roles.sql` e rollback idempotente `R009__rollback_rls_iam_roles.sql` (refs: Art. 0, data-model.md §RLS baseline)
+- [x] T022b [P] Criar migration V010 com ENABLE FORCE RLS + policy FOR ALL via JOIN para `iam_user_roles` em `V010__enable_rls_iam_user_roles.sql` e rollback `R010__rollback_rls_iam_user_roles.sql` (refs: Art. 0, data-model.md §iam_user_roles)
+- [x] T022c [P] Criar migration V011 com ENABLE FORCE RLS + policy INSERT + REVOKE UPDATE/DELETE para `iam_audit_events` em `V011__enable_rls_iam_audit_events.sql` e rollback `R011__rollback_rls_iam_audit_events.sql` (refs: Art. 0, FR-012, data-model.md §iam_audit_events)
 
 ### Phase 2.B: Shared Kernel - Contexto Multitenant
 
 Testes para Shared Kernel:
-- [ ] T023 [P] Unit test para TenantContext (validação de tenant_id não-nulo, imutabilidade) em `backend/clinic-shared-kernel/src/test/java/.../TenantContextTest.java` (refs: FR-002, FR-002a)
-- [ ] T024 [P] Unit test para TraceContext (geração de trace_id, propagação) em `backend/clinic-shared-kernel/src/test/java/.../TraceContextTest.java` (refs: FR-010, FR-010a)
-- [ ] T025 [P] Unit test para OperationOutcome builder (formato FHIR, severities) em backend/clinic-shared-kernel/.../OperationOutcomeTest.java` (refs: Art. VI)
+- [x] T023 [P] Unit test para TenantContext (validação de tenant_id não-nulo, imutabilidade) em `backend/clinic-shared-kernel/src/test/java/.../TenantContextTest.java` (refs: FR-002, FR-002a)
+- [x] T024 [P] Unit test para TraceContext (geração de trace_id, propagação) em `backend/clinic-shared-kernel/src/test/java/.../TraceContextTest.java` (refs: FR-010, FR-010a)
+- [x] T025 [P] Unit test para OperationOutcome builder (formato FHIR, severities) em backend/clinic-shared-kernel/.../OperationOutcomeTest.java` (refs: Art. VI)
 
 Implementação de Shared Kernel:
-- [ ] T026 [P] Implementar classe TenantContext com validações em `backend/clinic-shared-kernel/src/main/java/.../TenantContext.java` (refs: FR-002a)
-- [ ] T027 [P] Implementar classe TraceContext com geração UUID + propagação em `backend/clinic-shared-kernel/src/main/java/.../TraceContext.java` (refs: FR-010a)
-- [ ] T028 [P] Implementar OperationOutcome builder conforme FHIR R4 em `backend/clinic-shared-kernel/src/main/java/.../OperationOutcome.java` (refs: Art. VI)
-- [ ] T029 [P] Implementar TenantContextHolder para Spring RequestScope em `backend/clinic-shared-kernel/src/main/.../TenantContextHolder.java` (refs: Fr-002)
-- [ ] T030 [P] Implementar TraceContextHolder para Spring RequestScope (propagação entre layers) em `backend/clinic-shared-kernel/src/main/.../TraceContextHolder.java` (refs: FR-010a)
+- [x] T026 [P] Implementar classe TenantContext com validações em `backend/clinic-shared-kernel/src/main/java/.../TenantContext.java` (refs: FR-002a)
+- [x] T027 [P] Implementar classe TraceContext com geração UUID + propagação em `backend/clinic-shared-kernel/src/main/java/.../TraceContext.java` (refs: FR-010a)
+- [x] T028 [P] Implementar OperationOutcome builder conforme FHIR R4 em `backend/clinic-shared-kernel/src/main/java/.../OperationOutcome.java` (refs: Art. VI)
+- [x] T029 [P] Implementar TenantContextHolder para Spring RequestScope em `backend/clinic-shared-kernel/src/main/.../TenantContextHolder.java` (refs: Fr-002)
+- [x] T030 [P] Implementar TraceContextHolder para Spring RequestScope (propagação entre layers) em `backend/clinic-shared-kernel/src/main/.../TraceContextHolder.java` (refs: FR-010a)
+- [x] T030a [P] Unit test para TenantJdbcContextInterceptor: verificar que SET LOCAL é executado antes de qualquer statement em contexto com tenant, e que operação falha imediatamente sem tenant_id em `backend/clinic-shared-kernel/src/test/java/.../TenantJdbcContextInterceptorTest.java` (refs: FR-016, FR-016a)
+- [x] T030b [P] Implementar TenantJdbcContextInterceptor (Spring TransactionSynchronization ou DataSource proxy) que executa `SET LOCAL app.tenant_id = :tenantId` no inicio de cada transacao, usando TenantContextHolder, em `backend/clinic-shared-kernel/src/main/java/.../TenantJdbcContextInterceptor.java` — cobrindo HTTP, CLI, @Async e @Scheduled (refs: FR-016, Art. 0)
+- [x] T030c [P] Integration test com Testcontainers: validar que query em tabela tenant-scoped sem SET LOCAL prévio falha (não retorna linhas silenciosamente) e que query com SET LOCAL correto isola por tenant em `backend/clinic-shared-kernel/src/test/java/.../TenantRlsEnforcementIntegrationTest.java` (refs: FR-016, FR-016a, Art. 0)
+- [x] T030d [P] Integration test com Testcontainers: dado Tenant A e Tenant B com sessoes ativas, quando credenciais de Tenant A sao renovadas, entao sessoes de Tenant B permanecem validas e token de Tenant A e rejeitado como sessao de Tenant B em `backend/clinic-shared-kernel/src/test/java/.../CrossTenantSessionIsolationIntegrationTest.java` (refs: FR-007a, Art. 0, Art. XXII)
+- [x] T030e [P] Unit test: TenantMdcTaskDecorator deve copiar TenantContext e snapshot de MDC para a thread filha antes do handoff, e restaurar o MDC original apos execucao em `backend/clinic-shared-kernel/src/test/java/.../TenantMdcTaskDecoratorTest.java` (refs: FR-002b, FR-010a)
+- [x] T030f [P] Implementar TenantMdcTaskDecorator (Spring TaskDecorator) que captura TenantContext + MDC snapshot da thread chamadora e os restaura na thread de execucao em `backend/clinic-shared-kernel/src/main/java/.../TenantMdcTaskDecorator.java` (refs: FR-002b); configurar como decorator padrao no AsyncConfigurer do gateway
+- [x] T030g [P] Unit test: contexto de tenant e MDC MUST ser limpos (cleared) no finally de cada request/CLI invocation para evitar vazamento em pool de threads em `backend/clinic-shared-kernel/src/test/java/.../TenantContextCleanupTest.java` (refs: FR-002b, thread safety)
 
 ### Phase 2.C: Observability Core - Logging Estruturado + Tracing
 
 Testes:
-- [ ] T031 [P] Unit test para JsonLogger com campos tenant_id, trace_id, operation, outcome em `backend/clinic-observability-core/src/test/java/.../JsonLoggerTest.java` (refs: FR-011)
-- [ ] T032 [P] Contract test para trace propagation end-to-end em `backend/clinic-observability-core/src/test/java/.../TraceContextPropagationContractTest.java` (refs: FR-010a)
+- [x] T031 [P] Unit test para JsonLogger com campos tenant_id, trace_id, operation, outcome em `backend/clinic-observability-core/src/test/java/.../JsonLoggerTest.java` (refs: FR-011)
+- [x] T032 [P] Contract test para trace propagation end-to-end em `backend/clinic-observability-core/src/test/java/.../TraceContextPropagationContractTest.java` (refs: FR-010a)
 
 Implementação:
-- [ ] T033 [P] Implementar JsonLogger usando Logback com MDC (tenant_id, trace_id) em `backend/clinic-observability-core/src/main/java/.../JsonLogger.java` (refs: FR-010, FR-011)
-- [ ] T034 [P] Configurar Logback para saída JSON estruturada em `backend/clinic-observability-core/src/main/resources/logback-spring.xml` (refs: FR-011)
-- [ ] T035 [P] Implementar TenantAwareMeterRegistry (Micrometer) com tags tenant_id em `backend/clinic-observability-core/src/main/java/.../TenantAwareMeterRegistry.java` (refs: Fr-010a)
+- [x] T033 [P] Implementar JsonLogger usando Logback com MDC (tenant_id, trace_id) em `backend/clinic-observability-core/src/main/java/.../JsonLogger.java` (refs: FR-010, FR-011)
+- [x] T034 [P] Configurar Logback para saída JSON estruturada em `backend/clinic-observability-core/src/main/resources/logback-spring.xml` (refs: FR-011)
+- [x] T035 [P] Implementar TenantAwareMeterRegistry (Micrometer) com tags tenant_id em `backend/clinic-observability-core/src/main/java/.../TenantAwareMeterRegistry.java` (refs: Fr-010a)
 
 ### Phase 2.D: CI/CD + Gates Constitucionais
 
-- [ ] T036 Configurar script de drift verification (spec.md ↔ plan.md ↔ tasks.md ↔ código) em `.github/workflows/drift-verify.yml` (refs: Art. IX)
-- [ ] T037 Configurar SBOM generation (CycloneDX) em `.github/workflows/release.yml` para cada module release (refs: Art. XVI)
-- [ ] T038 Configurar blockers em CI: cobertura ≥80% unit, ≥90% IAM-critical, SpotBugs + SonarQube (refs: Art. I)
-- [ ] T039 Configurar checklist de validação constitucional em PR template `.github/PULL_REQUEST_TEMPLATE.md` (refs: Art. XIX)
+Nota de governanca: por aprovacao explicita do usuario em 2026-04-05, a execucao pode seguir para a Fase 2.B com o bloqueador de Art. I ainda aberto, desde que a pendencia de auditabilidade TDD seja mantida visivel e fechada antes do sign-off fundacional.
+
+- [x] T036 Configurar script de drift verification (spec.md ↔ plan.md ↔ tasks.md ↔ código) em `.github/workflows/drift-verify.yml` (refs: Art. IX)
+- [x] T037 Configurar SBOM generation (CycloneDX) em `.github/workflows/release.yml` para cada module release (refs: Art. XVI)
+- [x] T038 Configurar blockers em CI: cobertura ≥80% unit, ≥90% IAM-critical (definido abaixo), SpotBugs + SonarQube (refs: Art. I). **Escopo "IAM-critical"** = classes nos pacotes `com.clinicadigital.iam` e `com.clinicadigital.shared.tenant` cujo nome termina em: `*PasswordHasher`, `*SessionRepository`, `*TenantContext`, `*TenantContextHolder`, `*SessionRevocation`, `*AuditEventWriter`, `*TenantJdbcContextInterceptor`. JaCoCo MUST incluir filtro de pacote `com/clinicadigital/iam/**` + `com/clinicadigital/shared/tenant/**` com threshold de instrucao ≥90% no perfil Maven `quality` (refs: Art. I, Art. 0, Art. XXII).
+- [x] T039 Configurar checklist de validação constitucional em PR template `.github/PULL_REQUEST_TEMPLATE.md` (refs: Art. XIX)
 
 **Checkpoint**: Database + RLS pronta, shared kernel disponível, observabilidade configurada, CI/CD bloqueante - **user stories podem começar agora**
 
@@ -110,31 +122,31 @@ Implementação:
 
 ### Phase 3.A: Testes para Isolamento Tenant (MANDATORY - write first)
 
-- [ ] T040 [P] [US1] Contract test para HTTP endpoint com validação de tenant_id obrigatório em `backend/clinic-gateway-app/src/test/java/.../TenantBoundaryContractTest.java` (refs: FR-002a)
-- [ ] T041 [P] [US1] Integration test com Testcontainers: criar 2 tenants, inserir dados em cada um, verificar RLS isola automaticamente em `backend/.../integration/TenantIsolationRLSTest.java` (refs: Art. 0, FR-001, FR-002)
-- [ ] T042 [P] [US1] Contract test para CLI command com --tenant obrigatório e fail-closed sem ele em `backend/clinic-tenant-core/src/test/.../TenantCLIContractTest.java` (refs: FR-002a)
-- [ ] T043 [P] [US1] Integration test: requisição sem header tenant_id deve retornar 403 Forbidden com OperationOutcome em `backend/.../integration/TenantMissingContextTest.java` (refs: FR-002a, Art. VI)
+- [x] T040 [P] [US1] Contract test para HTTP endpoint com validação de tenant_id obrigatório em `backend/clinic-gateway-app/src/test/java/.../TenantBoundaryContractTest.java` (refs: FR-002a)
+- [x] T041 [P] [US1] Integration test com Testcontainers: criar 2 tenants, inserir dados em cada um, verificar RLS isola automaticamente em `backend/.../integration/TenantIsolationRLSTest.java` (refs: Art. 0, FR-001, FR-002)
+- [x] T042 [P] [US1] Contract test para CLI command com --tenant obrigatório e fail-closed sem ele em `backend/clinic-tenant-core/src/test/.../TenantCLIContractTest.java` (refs: FR-002a)
+- [x] T043 [P] [US1] Integration test: requisição sem header tenant_id deve retornar 403 Forbidden com OperationOutcome em `backend/.../integration/TenantMissingContextTest.java` (refs: FR-002a, Art. VI)
 
 ### Phase 3.B: Implementação de Tenant Context (Models + Services)
 
-- [ ] T044 [P] [US1] Implementar entity Tenant em `backend/clinic-tenant-core/src/main/java/.../domain/Tenant.java` com fields: id, slug, legal_name, status, plan_tier, quota_*, created_at, updated_at (refs: FR-001, FR-008)
-- [ ] T045 [P] [US1] Criar repository interface ITenantRepository em `backend/clinic-tenant-core/src/main/java/.../domain/ITenantRepository.java` com findBySlug, findById (refs: FR-013)
-- [ ] T046 [US1] Implementar TenantRepository usando Spring Data JPA com RLS-aware queries em `backend/clinic-tenant-core/src/main/java/.../infrastructure/TenantRepository.java` (depends: T044, T045; refs: Art. 0)
-- [ ] T047 [US1] Implementar TenantService in `backend/clinic-tenant-core/src/main/java/.../application/TenantService.java` com métodos: createTenant, getTenant, updateQuota (refs: FR-001, FR-008)
+- [x] T044 [P] [US1] Implementar entity Tenant em `backend/clinic-tenant-core/src/main/java/.../domain/Tenant.java` com fields: id, slug, legal_name, status, plan_tier, quota_*, created_at, updated_at (refs: FR-001, FR-008)
+- [x] T045 [P] [US1] Criar repository interface ITenantRepository em `backend/clinic-tenant-core/src/main/java/.../domain/ITenantRepository.java` com findBySlug, findById (refs: FR-013)
+- [x] T046 [US1] Implementar TenantRepository usando Spring Data JPA com RLS-aware queries em `backend/clinic-tenant-core/src/main/java/.../infrastructure/TenantRepository.java` (depends: T044, T045; refs: Art. 0)
+- [x] T047 [US1] Implementar TenantService in `backend/clinic-tenant-core/src/main/java/.../application/TenantService.java` com métodos: createTenant, getTenant, updateQuota (refs: FR-001, FR-008)
 
 ### Phase 3.C: HTTP Adapter - Boundary Validation
 
-- [ ] T048 [P] [US1] Criar TenantContextFilter (Spring Filter) que extrai tenant_id do header X-Tenant-ID e valida em `backend/clinic-gateway-app/src/main/java/.../filters/TenantContextFilter.java` (refs: FR-002a)
-- [ ] T049 [P] [US1] Criar TenantValidationAspect (Spring AOP) que enforce `SET LOCAL app.tenant_id` antes de qualquer query em `backend/clinic-gateway-app/src/main/java/.../aspects/TenantValidationAspect.java` (refs: Art. 0)
-- [ ] T050 [US1] Implementar endpoint POST /tenants/create em `backend/clinic-gateway-app/src/main/java/.../api/TenantController.java` (depends: T047; refs: FR-001)
-- [ ] T051 [US1] Implementar endpoint GET /tenants/{id} com validação de tenant_id em path + context em `backend/clinic-gateway-app/src/main/java/.../api/TenantController.java` (depends: T047; refs: FR-002)
-- [ ] T052 [US1] Adicionar error handler global que retorna FHIR OperationOutcome para tenant context missing/invalid em `backend/clinic-gateway-app/src/main/java/.../exception/GlobalExceptionHandler.java` (refs: FR-002a, Art. VI)
+- [x] T048 [P] [US1] Criar TenantContextFilter (Spring Filter) que extrai tenant_id do header X-Tenant-ID e valida em `backend/clinic-gateway-app/src/main/java/.../filters/TenantContextFilter.java` (refs: FR-002a)
+- [x] T049 [P] [US1] Criar TenantValidationAspect (Spring AOP) que enforce `SET LOCAL app.tenant_id` antes de qualquer query em `backend/clinic-gateway-app/src/main/java/.../aspects/TenantValidationAspect.java` (refs: Art. 0)
+- [x] T050 [US1] Implementar endpoint POST /tenants/create em `backend/clinic-gateway-app/src/main/java/.../api/TenantController.java` (depends: T047; refs: FR-001)
+- [x] T051 [US1] Implementar endpoint GET /tenants/{id} com validação de tenant_id em path + context em `backend/clinic-gateway-app/src/main/java/.../api/TenantController.java` (depends: T047; refs: FR-002)
+- [x] T052 [US1] Adicionar error handler global que retorna FHIR OperationOutcome para tenant context missing/invalid em `backend/clinic-gateway-app/src/main/java/.../exception/GlobalExceptionHandler.java` (refs: FR-002a, Art. VI)
 
 ### Phase 3.D: CLI para Tenant Core
 
-- [ ] T053 [P] [US1] Criar CLI command `tenant create` em `backend/clinic-tenant-core/src/main/java/.../cli/TenantCommands.java` com args --slug, --legal-name, --plan-tier, suport --json output em JSON структурованы (refs: FR-004, Art. II)
-- [ ] T054 [P] [US1] Criar CLI command `tenant list` em `backend/clinic-tenant-core/.../cli/TenantCommands.java` com --json output (refs: Art. II)
-- [ ] T055 [P] [US1] Integrar CLI commands em gateway boot app via Spring Shell em `backend/clinic-gateway-app/src/main/java/.../CliShellConfig.java` (refs: Art. II)
+- [x] T053 [P] [US1] Criar CLI command `tenant create` em `backend/clinic-tenant-core/src/main/java/.../cli/TenantCommands.java` com args --slug, --legal-name, --plan-tier, suport --json output em JSON структурованы (refs: FR-004, Art. II)
+- [x] T054 [P] [US1] Criar CLI command `tenant list` em `backend/clinic-tenant-core/.../cli/TenantCommands.java` com --json output (refs: Art. II)
+- [x] T055 [P] [US1] Integrar CLI commands em gateway boot app via Spring Shell em `backend/clinic-gateway-app/src/main/java/.../CliShellConfig.java` (refs: Art. II)
 
 ### Phase 3.E: Quota Enforcement (Defesa contra Noisy Neighbors)
 

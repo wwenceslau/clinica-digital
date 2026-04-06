@@ -117,7 +117,65 @@ Estrutura inicial para fundacao de tenancy e IAM interno no PostgreSQL 15, com R
 
 RLS obrigatoria para: iam_users, iam_roles, iam_user_roles, iam_sessions, iam_audit_events e quaisquer tabelas clinicas tenant-scoped.
 
-Exemplo de policy:
+A policy MUST usar USING e WITH CHECK baseados em `current_setting('app.tenant_id')::uuid`. O valor MUST ser injetado antes de qualquer query via `SET LOCAL app.tenant_id = :tenantId` no boundary transacional (ver FR-016). FORCE RLS garante que mesmo roles com BYPASSRLS implicito nao escapem.
+
+### Especificacao por tabela
+
+| Tabela            | Tipo de policy | Role alvo      | Observacao                                   |
+|-------------------|---------------|----------------|----------------------------------------------|
+| iam_users         | FOR ALL       | app_user       | filtro em tenant_id                          |
+| iam_roles         | FOR ALL       | app_user       | filtro em tenant_id                          |
+| iam_user_roles    | FOR ALL       | app_user       | filtro via JOIN em iam_roles.tenant_id (ver nota) |
+| iam_sessions      | FOR ALL       | app_user       | filtro em tenant_id                          |
+| iam_audit_events  | INSERT only   | app_user       | append-only: apenas INSERT permitido; UPDATE/DELETE proibidos por policy + REVOKE |
+
+### iam_role_permissions — excecao documentada de RLS
+
+A tabela `iam_role_permissions` nao possui coluna `tenant_id` propria (primary key composta: role_id, permission_id). O isolamento e herdado indiretamente atraves das policies de `iam_roles` (que restringem os role_id visiveis por tenant). Portanto:
+- RLS de linha propria nao e aplicavel a `iam_role_permissions`.
+- A policy em `iam_roles` MUST bloquear acesso a roles de outros tenants, garantindo que associacoes de permissao de outros tenants sejam invisiveis por transitividade.
+- Esta excecao e intencional e documentada. Nao requer ENABLE RLS na tabela `iam_role_permissions`.
+
+### iam_user_roles — policy via JOIN
+
+A tabela `iam_user_roles` nao possui `tenant_id` diretamente. A RLS MUST usar subselect/JOIN na tabela `iam_roles` para filtrar:
+
+```sql
+ALTER TABLE iam_user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE iam_user_roles FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY iam_user_roles_tenant_isolation ON iam_user_roles
+FOR ALL
+USING (
+  role_id IN (
+    SELECT id FROM iam_roles
+    WHERE tenant_id = current_setting('app.tenant_id')::uuid
+  )
+)
+WITH CHECK (
+  role_id IN (
+    SELECT id FROM iam_roles
+    WHERE tenant_id = current_setting('app.tenant_id')::uuid
+  )
+);
+```
+
+### iam_audit_events — append-only enforcement
+
+```sql
+ALTER TABLE iam_audit_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE iam_audit_events FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY iam_audit_events_tenant_isolation ON iam_audit_events
+FOR ALL
+USING (tenant_id = current_setting('app.tenant_id')::uuid)
+WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid);
+
+-- Append-only: revogar UPDATE e DELETE do role de aplicacao
+REVOKE UPDATE, DELETE ON iam_audit_events FROM app_user;
+```
+
+### Exemplo de policy padrao (iam_sessions — referencia)
 
 ```sql
 ALTER TABLE iam_sessions ENABLE ROW LEVEL SECURITY;
@@ -128,6 +186,10 @@ FOR ALL
 USING (tenant_id = current_setting('app.tenant_id')::uuid)
 WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid);
 ```
+
+### Comportamento quando app.tenant_id nao esta definido
+
+Quando `app.tenant_id` nao foi definido via SET LOCAL antes da query, `current_setting('app.tenant_id')` lancat erro se o segundo argumento for omitido, ou retorna `''` com `current_setting('app.tenant_id', true)`. A policy MUST usar a forma sem fallback (lancar erro) para garantir fail-closed (FR-002a, FR-016a). Nenhuma linha deve ser retornada silenciosamente para contexto de tenant nao inicializado.
 
 ## Indices iniciais
 

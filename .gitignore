@@ -1,0 +1,42 @@
+# Java / Maven
+**/target/
+**/.mvn/
+**/.gradle/
+**/build/
+*.class
+*.jar
+*.war
+*.ear
+
+# Node / TypeScript
+**/node_modules/
+**/dist/
+**/coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE / editor
+.vscode/
+.idea/
+*.iml
+
+# OS / temporary files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# Test artifacts
+**/.pytest_cache/
+**/.testcontainers/
+
+# Logs
+*.log

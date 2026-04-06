@@ -1,0 +1,142 @@
+<!-- Logback Spring Configuration for Structured JSON Logging -->
+<!-- Refs: FR-010, FR-010a, FR-011 (Structured observability with tenant/trace correlation) -->
+<configuration>
+    <!-- Application name for log filtering -->
+    <springProperty name="APPLICATION_NAME" source="spring.application.name" defaultValue="clinica-digital" />
+    
+    <!-- JSON Console Appender for structured logging with MDC fields -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- Use Logstash JSON encoder for structured output -->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <!-- Timestamp in ISO 8601 format -->
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                
+                <!-- Application context -->
+                <version>
+                    <fieldName>@version</fieldName>
+                </version>
+                
+                <!-- Message and logger context -->
+                <message />
+                
+                <!-- Log level -->
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                
+                <!-- Logger name -->
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                
+                <!-- Thread name -->
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+                
+                <!-- Stack trace for exceptions -->
+                <stackTrace>
+                    <fieldName>stackTrace</fieldName>
+                </stackTrace>
+                
+                <!-- MDC fields: tenant_id (MANDATORY) -->
+                <mdc>
+                    <fieldName>mdc</fieldName>
+                    <includeMdcKeyName>tenant_id</includeMdcKeyName>
+                    <includeMdcKeyName>trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>operation</includeMdcKeyName>
+                    <includeMdcKeyName>outcome</includeMdcKeyName>
+                </mdc>
+                
+                <!-- Application name provider -->
+                <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
+                    <pattern>
+                        {
+                          "application": "${APPLICATION_NAME}",
+                          "environment": "${LOG_ENVIRONMENT:-development}"
+                        }
+                    </pattern>
+                </provider>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- JSON File Appender for JSON log persistence (optional: can be enabled for production) -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/clinica-digital.json.log</file>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <version>
+                    <fieldName>@version</fieldName>
+                </version>
+                <message />
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+                <stackTrace />
+                <mdc>
+                    <fieldName>mdc</fieldName>
+                    <includeMdcKeyName>tenant_id</includeMdcKeyName>
+                    <includeMdcKeyName>trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>operation</includeMdcKeyName>
+                    <includeMdcKeyName>outcome</includeMdcKeyName>
+                </mdc>
+            </providers>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/clinica-digital.%d{yyyy-MM-dd}.%i.json.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Spring Profiles Configuration -->
+    <!-- Development: console output only, INFO level -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE" />
+        </root>
+        <!-- Silence verbose libraries -->
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+    </springProfile>
+
+    <!-- Test: console output, DEBUG level for application code -->
+    <springProfile name="test">
+        <root level="DEBUG">
+            <appender-ref ref="JSON_CONSOLE" />
+        </root>
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+    </springProfile>
+
+    <!-- Production: console + file, INFO level, structured JSON -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE" />
+            <appender-ref ref="JSON_FILE" />
+        </root>
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+    </springProfile>
+
+    <!-- Default fallback (if no profile specified) -->
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE" />
+    </root>
+</configuration>

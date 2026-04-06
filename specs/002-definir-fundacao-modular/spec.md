@@ -63,11 +63,11 @@ Como responsavel por seguranca e confiabilidade, quero que os requisitos definam
 ### Edge Cases
 
 - Requisicoes com tenant_id ausente, invalido ou inconsistente devem falhar fechado na fronteira com rejeicao imediata, sem fallback e sem processamento downstream.
-- Como o sistema se comporta quando comandos CLI de modulos distintos sao executados em paralelo para tenants diferentes?
-- Como impedir compartilhamento indevido de contexto de sessao entre tenant apos renovacao de credenciais?
-- Como manter rastreabilidade completa quando parte do fluxo passa por processamento assincrono e retentativas?
-- Como o sistema protege os tenants saudaveis quando um tenant excede continuamente os limites de cota?
-- Operacoes administrativas cross-tenant devem ser proibidas por padrao e so podem ocorrer em contexto separado com autorizacao explicita e auditoria por acesso.
+- Comandos CLI de modulos distintos executados em paralelo para tenants diferentes MUST operar de forma completamente isolada: nenhum contexto de tenant, sessao, trace_id ou estado compartilhado entre as execucoes paralelas.
+- Compartilhamento indevido de sessao entre tenants apos renovacao de credenciais e proibido. Criterio: ver FR-007a — tokens de Tenant A nunca sao aceitos como sessao valida de Tenant B, e a renovacao de credenciais de Tenant A nao invalida sessoes de Tenant B.
+- Quando parte do fluxo passa por processamento assincrono, o trace_id MUST ser propagado via TaskDecorator/MDC snapshot antes do handoff de thread, de forma que o log de cada thread filha contenha o mesmo trace_id da operacao de origem (ver FR-010a, FR-002b).
+- Quando um tenant excede continuamente limites de cota, apenas esse tenant sofre restricao; os demais tenants saudaveis preservam desempenho sem degradacao cruzada (ver FR-009a).
+- Operacoes administrativas cross-tenant devem ser proibidas por padrao e so podem ocorrer em contexto separado com autorizacao explicita e auditoria por acesso (ver FR-015).
 
 ## Requirements *(mandatory)*
 
@@ -76,12 +76,14 @@ Como responsavel por seguranca e confiabilidade, quero que os requisitos definam
 - **FR-001**: A fundacao da plataforma MUST definir isolamento multitenant obrigatorio para dados, processamento e contexto de execucao em todas as capacidades clinicas.
 - **FR-002**: A plataforma MUST exigir que o contexto de tenant seja identificado na fronteira e propagado de forma continua por todas as camadas de processamento ate a persistencia.
 - **FR-002a**: O sistema MUST adotar comportamento fail-closed para tenant_id ausente, invalido ou inconsistente em HTTP, CLI e fluxos assincronos: rejeicao imediata na fronteira, sem fallback e sem processamento downstream, com registro auditavel.
+- **FR-002b**: Em fluxos assincronos (@Async, CompletableFuture, @Scheduled e thread pools gerenciados pela plataforma), o TenantContextHolder e o MDC (tenant_id, trace_id) MUST ser propagados para a thread de execucao antes do handoff via mecanismo de TaskDecorator ou equivalente. Scheduled tasks MUST inicializar contexto de tenant explicitamente antes de qualquer operacao tenant-scoped. A ausencia de contexto propagado MUST resultar em falha imediata (fail-closed, FR-002a).
 - **FR-003**: A organizacao modular MUST tratar cada funcionalidade clinica como biblioteca independente, reutilizavel e com fronteiras de responsabilidade explicitamente definidas.
 - **FR-004**: Cada modulo funcional MUST ter requisitos de interface CLI para seus fluxos principais, incluindo comportamento deterministico e saida estruturada para automacao e observabilidade.
 - **FR-005**: A arquitetura MUST separar de forma explicita a logica de autenticacao, identidade e sessao (IAM interno) das bibliotecas de dominio clinico.
 - **FR-006**: O modelo de seguranca MUST impedir que bibliotecas de dominio clinico assumam responsabilidade primaria de autenticacao ou armazenamento de credenciais.
 - **FR-006a**: Modulos clinicos MUST consumir apenas contexto autenticado e autorizado proveniente da camada IAM interna, sem acesso direto a credenciais, tokens de sessao ou mecanismos de autenticacao.
 - **FR-007**: A fundacao MUST estabelecer requisitos para isolamento de sessoes e credenciais por tenant sem compartilhamento, inferencia ou reutilizacao cruzada.
+- **FR-007a**: Apos renovacao ou re-emissao de credenciais para Tenant A, todas as sessoes de Tenant B MUST permanecer validas, intactas e logicamente isoladas — sem nenhuma invalidacao cruzada, compartilhamento de token ou reutilizacao de contexto entre tenants. Criterio de aceitacao: dado Tenant A e Tenant B com sessoes ativas, quando as credenciais de Tenant A forem renovadas, entao todas as sessoes de Tenant B devem continuar respondendo com 200 (sessao valida) e nenhum token de Tenant A deve ser aceito como sessao valida de Tenant B.
 - **FR-008**: A plataforma MUST definir limites de cota e consumo por tenant para proteger desempenho e disponibilidade entre inquilinos.
 - **FR-009**: A estrutura de requisitos MUST prever comportamento padrao e auditavel quando limites de cota por tenant forem excedidos.
 - **FR-009a**: Ao exceder cota, o tenant infrator MUST ser bloqueado imediatamente com resposta padronizada e auditavel, preservando desempenho e disponibilidade dos demais tenants sem degradacao cruzada.
@@ -92,6 +94,8 @@ Como responsavel por seguranca e confiabilidade, quero que os requisitos definam
 - **FR-013**: A fundacao MUST exigir contratos claros entre modulos para evitar dependencia de detalhes internos de outras bibliotecas.
 - **FR-014**: A organizacao da plataforma MUST permitir evolucao independente de modulos sem impacto funcional obrigatorio em tenants ou modulos nao relacionados.
 - **FR-015**: Operacoes cross-tenant MUST ser proibidas por padrao e somente permitidas em contexto administrativo separado, com autorizacao explicita e trilha de auditoria por acesso.
+- **FR-016**: A plataforma MUST executar `SET LOCAL app.tenant_id = :tenantId` na conexao JDBC ativa antes de qualquer query em tabela tenant-scoped. Esse contexto MUST ser definido via interceptor/AOP/DataSource proxy em todos os entry boundaries: HTTP, CLI, consumers assincronos e scheduled tasks. A ausencia de tenant_id no contexto MUST resultar em falha imediata da operacao, sem fallback e sem execucao da query (fail-closed, Art. 0).
+- **FR-016a**: Quando `app.tenant_id` nao estiver disponivel no momento do SET LOCAL (ex.: thread pool sem contexto propagado, CLI sem --tenant, scheduler sem contexto inicializado), a operacao MUST falhar com excecao auditavel antes de qualquer acesso ao banco. Nenhuma query tenant-scoped pode executar sem SET LOCAL precedente.
 
 ### Key Entities *(include if feature involves data)*
 
