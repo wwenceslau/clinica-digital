@@ -1,0 +1,36 @@
+groups:
+  - name: tenant-isolation
+    interval: 30s
+    rules:
+      - alert: CrossTenantAccessAttemptDetected
+        expr: sum by (tenant_id) (increase(tenant_isolation_failures_total{reason="path_mismatch"}[5m])) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: clinic-gateway-app
+          category: tenant-isolation
+        annotations:
+          summary: "Cross-tenant access attempt detected"
+          description: "Tenant {{ $labels.tenant_id }} triggered at least one path/context mismatch in the last 5 minutes. Investigate trace correlation and client origin immediately."
+
+      - alert: TenantBoundaryRejectionsBurst
+        expr: sum(increase(tenant_isolation_failures_total{reason=~"missing_header|invalid_header"}[10m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: clinic-gateway-app
+          category: tenant-boundary
+        annotations:
+          summary: "Spike in tenant boundary rejections"
+          description: "More than 10 tenant boundary rejections were observed in the last 10 minutes. This may indicate client misconfiguration or probing."
+
+      - alert: TenantQuotaBlocksBurst
+        expr: sum by (tenant_id) (increase(tenant_quota_blocks_total[10m])) >= 5
+        for: 5m
+        labels:
+          severity: warning
+          service: clinic-gateway-app
+          category: quota
+        annotations:
+          summary: "Tenant is repeatedly hitting quota limits"
+          description: "Tenant {{ $labels.tenant_id }} exceeded request quota at least five times in the last 10 minutes. Review noisy-neighbor behavior and plan limits."

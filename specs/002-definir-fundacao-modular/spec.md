@@ -15,6 +15,10 @@
 - Q: Qual politica obrigatoria de trace_id deve ser adotada na fundacao? -> A: Na fronteira, se nao houver trace_id valido, gerar; se houver valido, preservar; em ambos os casos, propagacao obrigatoria ate persistencia e eventos.
 - Q: Qual regra obrigatoria deve governar operacoes administrativas que precisem de visao cross-tenant? -> A: Proibidas por padrao; so permitidas em contexto administrativo separado, com autorizacao explicita e trilha de auditoria por acesso.
 
+### Session 2026-04-07
+
+- Q: Qual requisito operacional deve valer para filtros e outros componentes singleton na fronteira que dependem de contexto request-scoped de tenant/trace? -> A: Devem acessar `TenantContextHolder` e `TraceContextHolder` por provider/proxy seguro por request, de forma que cleanup de contexto nunca converta falhas contratuais de tenant/trace em erro 500; o comportamento obrigatorio continua sendo rejeicao auditavel e fail-closed na fronteira.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Isolamento multitenant como base do sistema (Priority: P1)

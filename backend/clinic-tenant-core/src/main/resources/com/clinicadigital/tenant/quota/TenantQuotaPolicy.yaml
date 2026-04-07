@@ -1,0 +1,13 @@
+version: 1
+policy_name: tenant_quota_policy
+description: Conservatively block only the offending tenant when request-rate quotas are exceeded.
+defaults:
+  fail_closed: true
+  response_status: 429
+  action: block_immediately
+metrics:
+  http.request:
+    tenant_field: quota_requests_per_minute
+    window: PT1M
+    outcome: quota_exceeded
+    preserves_other_tenants: true

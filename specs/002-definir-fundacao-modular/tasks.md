@@ -150,22 +150,22 @@ Nota de governanca: por aprovacao explicita do usuario em 2026-04-05, a execucao
 
 ### Phase 3.E: Quota Enforcement (Defesa contra Noisy Neighbors)
 
-- [ ] T056 [P] [US1] Criar QuotaService em `backend/clinic-tenant-core/src/main/java/.../application/QuotaService.java` com método: checkAndEnforceQuota(tenantId, metric) retorna void ou throws QuotaExceededException (refs: FR-008, FR-009a)
-- [ ] T057 [P] [US1] Criar QuotaBoundaryFilter (Spring Filter) que intercepta requisições, checa quotas por tenant_id, retorna 429 se excedido em `backend/clinic-gateway-app/src/main/java/.../filters/QuotaBoundaryFilter.java` (refs: FR-009a)
-- [ ] T058 [US1] Integration test: criar tenant com quota_requests_per_minute=5, disparar 6 requests, verificar que 6º retorna 429 QuotaExceeded em `backend/.../integration/QuotaEnforcementTest.java` (refs: FR-009a)
-- [ ] T059 [P] [US1] Tarefa Verificacao de Quotas para tenant operations em `backend/clinic-tenant-core/src/main/java/.../quota/TenantQuotaPolicy.yaml` (refs: Art. X, FR-008, FR-009a)
+- [x] T056 [P] [US1] Criar QuotaService em `backend/clinic-tenant-core/src/main/java/.../application/QuotaService.java` com método: checkAndEnforceQuota(tenantId, metric) retorna void ou throws QuotaExceededException (refs: FR-008, FR-009a)
+- [x] T057 [P] [US1] Criar QuotaBoundaryFilter (Spring Filter) que intercepta requisições, checa quotas por tenant_id, retorna 429 se excedido em `backend/clinic-gateway-app/src/main/java/.../filters/QuotaBoundaryFilter.java` (refs: FR-009a)
+- [x] T058 [US1] Integration test: criar tenant com quota_requests_per_minute=5, disparar 6 requests, verificar que 6º retorna 429 QuotaExceeded em `backend/.../integration/QuotaEnforcementTest.java` (refs: FR-009a)
+- [x] T059 [P] [US1] Tarefa Verificacao de Quotas para tenant operations em `backend/clinic-tenant-core/src/main/java/.../quota/TenantQuotaPolicy.yaml` (refs: Art. X, FR-008, FR-009a)
 
 ### Phase 3.F: Observabilidade para US1
 
-- [ ] T060 [P] [US1] Implementar trace_id em TenantContextFilter (gerar se ausente, preservar se valido) em `backend/clinic-gateway-app/src/main/java/.../filters/TenantContextFilter.java` (refs: FR-010a)
-- [ ] T061 [P] [US1] Adicionar logs JSON estruturados com tenant_id, trace_id, operation, outcome a todas querys de tenant em `backend/clinic-tenant-core/src/main/java/.../application/TenantService.java` (refs: FR-010, FR-011)
-- [ ] T062 [P] [US1] Configurar dashboard Grafana para monitorar tenant isolation (failed isolation attempts, quota blocks) em `observability/grafana/tenant-isolation.json` (refs: Art. XI)
-- [ ] T063 [P] [US1] Configurar alertas para tentativas de acesso cross-tenant em `observability/prometheus/tenant_isolation_rules.yml` (refs: Art. XI, FR-002)
+- [x] T060 [P] [US1] Implementar trace_id em TenantContextFilter (gerar se ausente, preservar se valido) em `backend/clinic-gateway-app/src/main/java/.../filters/TenantContextFilter.java` (refs: FR-010a)
+- [x] T061 [P] [US1] Adicionar logs JSON estruturados com tenant_id, trace_id, operation, outcome a todas querys de tenant em `backend/clinic-tenant-core/src/main/java/.../application/TenantService.java` (refs: FR-010, FR-011)
+- [x] T062 [P] [US1] Configurar dashboard Grafana para monitorar tenant isolation (failed isolation attempts, quota blocks) em `observability/grafana/tenant-isolation.json` (refs: Art. XI)
+- [x] T063 [P] [US1] Configurar alertas para tentativas de acesso cross-tenant em `observability/prometheus/tenant_isolation_rules.yml` (refs: Art. XI, FR-002)
 
 ### Phase 3.G: Validação Constitucional de US1
 
-- [ ] T064 [US1] Executar /speckit.checklist para validar conformidade de US1 com constituição (Art. 0, Art. I, Art. II, Art. XI) em `backend/` (refs: Art. XIX)
-- [ ] T065 [US1] Revisar edge cases de US1 em spec.md e atualizar Clarifications se novos riscos surgidos (refs: Art. XXI)
+- [x] T064 [US1] Executar /speckit.checklist para validar conformidade de US1 com constituição (Art. 0, Art. I, Art. II, Art. XI) em `backend/` (refs: Art. XIX)
+- [x] T065 [US1] Revisar edge cases de US1 em spec.md e atualizar Clarifications se novos riscos surgidos (refs: Art. XXI)
 
 **Checkpoint**: US1 MVP concluída - isolamento tenant_id + RLS + quota enforcement funcionando, pronto para testes de aceitação e demo
 
@@ -179,40 +179,40 @@ Nota de governanca: por aprovacao explicita do usuario em 2026-04-05, a execucao
 
 ### Phase 4.A: Testes para Modularização (MANDATORY)
 
-- [ ] T066 [P] [US2] Contract test para API pública de clinic-tenant-core em `backend/clinic-tenant-core/src/test/.../contract/TenantCorePublicAPITest.java` validando que públicas são apenas as esperadas (refs: FR-013)
-- [ ] T067 [P] [US2] Contract test para CLI de clinic-tenant-core (tenant create/list/update/delete com JSON) em `backend/clinic-tenant-core/src/test/.../contract/TenantCLIContractTest.java` (refs: FR-004, Art. II)
-- [ ] T068 [P] [US2] Contract test para API pública de clinic-iam-core em `backend/clinic-iam-core/src/test/.../contract/IAMCorePublicAPITest.java` (refs: FR-013)
-- [ ] T069 [P] [US2] Contract test para CLI de clinic-iam-core (auth login/logout/whoami com JSON) em `backend/clinic-iam-core/src/test/.../contract/IAMCLIContractTest.java` (refs: FR-004, Art. II, Art. XXII)
-- [ ] T070 [P] [US2] Contract test para API pública de clinic-observability-core em `backend/clinic-observability-core/src/test/.../contract/ObservabilityCorePublicAPITest.java` (refs: FR-013)
+- [x] T066 [P] [US2] Contract test para API pública de clinic-tenant-core em `backend/clinic-tenant-core/src/test/.../contract/TenantCorePublicAPITest.java` validando que públicas são apenas as esperadas (refs: FR-013)
+- [x] T067 [P] [US2] Contract test para CLI de clinic-tenant-core (tenant create/list/update/delete com JSON) em `backend/clinic-tenant-core/src/test/.../contract/TenantCLIContractTest.java` (refs: FR-004, Art. II)
+- [x] T068 [P] [US2] Contract test para API pública de clinic-iam-core em `backend/clinic-iam-core/src/test/.../contract/IAMCorePublicAPITest.java` (refs: FR-013)
+- [x] T069 [P] [US2] Contract test para CLI de clinic-iam-core (auth login/logout/whoami com JSON) em `backend/clinic-iam-core/src/test/.../contract/IAMCLIContractTest.java` (refs: FR-004, Art. II, Art. XXII)
+- [x] T070 [P] [US2] Contract test para API pública de clinic-observability-core em `backend/clinic-observability-core/src/test/.../contract/ObservabilityCorePublicAPITest.java` (refs: FR-013)
 
 ### Phase 4.B: Contratos e Limites de Módulos
 
-- [ ] T071 [P] [US2] Documentar API pública de clinic-tenant-core em `backend/clinic-tenant-core/docs/PUBLIC_API.md` com DTOs, métodos e versionamento (refs: FR-013)
-- [ ] T072 [P] [US2] Documentar API pública de clinic-iam-core em `backend/clinic-iam-core/docs/PUBLIC_API.md` (refs: FR-013)
-- [ ] T073 [P] [US2] Documentar API pública de clinic-observability-core em `backend/clinic-observability-core/docs/PUBLIC_API.md` (refs: FR-013)
-- [ ] T074 [P] [US2] Resolver qualquer acoplamento circular entre modules (se encontrado) em `backend/pom.xml` (refs: Art. III)
+- [x] T071 [P] [US2] Documentar API pública de clinic-tenant-core em `backend/clinic-tenant-core/docs/PUBLIC_API.md` com DTOs, métodos e versionamento (refs: FR-013)
+- [x] T072 [P] [US2] Documentar API pública de clinic-iam-core em `backend/clinic-iam-core/docs/PUBLIC_API.md` (refs: FR-013)
+- [x] T073 [P] [US2] Documentar API pública de clinic-observability-core em `backend/clinic-observability-core/docs/PUBLIC_API.md` (refs: FR-013)
+- [x] T074 [P] [US2] Resolver qualquer acoplamento circular entre modules (se encontrado) em `backend/pom.xml` (refs: Art. III)
 
 ### Phase 4.C: CLI Expandida para Todos Módulos
 
-- [ ] T075 [P] [US2] Expandir TenantCommands com `tenant quota update`, `tenant block`, `tenant unblock` em `backend/clinic-tenant-core/src/main/java/.../cli/TenantCommands.java` (refs: FR-004, Art. II)
-- [ ] T076 [P] [US2] Criar QuotaCommands em `backend/clinic-tenant-core/src/main/java/.../cli/QuotaCommands.java` com `quota check <tenant-id>` suportando JSON output (refs: FR-004, Art. II)
-- [ ] T077 [P] [US2] Integrar observability commands em `backend/clinic-observability-core/src/main/java/.../cli/ObservabilityCommands.java` com `trace validate --trace-id`, `metrics export` (refs: FR-004, Art. II, FR-010a)
+- [x] T075 [P] [US2] Expandir TenantCommands com `tenant quota update`, `tenant block`, `tenant unblock` em `backend/clinic-tenant-core/src/main/java/.../cli/TenantCommands.java` (refs: FR-004, Art. II)
+- [x] T076 [P] [US2] Criar QuotaCommands em `backend/clinic-tenant-core/src/main/java/.../cli/QuotaCommands.java` com `quota check <tenant-id>` suportando JSON output (refs: FR-004, Art. II)
+- [x] T077 [P] [US2] Integrar observability commands em `backend/clinic-observability-core/src/main/java/.../cli/ObservabilityCommands.java` com `trace validate --trace-id`, `metrics export` (refs: FR-004, Art. II, FR-010a)
 
 ### Phase 4.D: Validação de Independência de Módulos
 
-- [ ] T078 [US2] Build test: cada módulo deve compilar/testar isoladamente (sem compilar outros) em `backend/` com `mvn clean verify -pl clinic-tenant-core` (refs: FR-014)
-- [ ] T079 [US2] Verificar que clinic-tenant-core não importa de clinic-iam-core (vs vice versa permitido) em `backend/` (refs: Art. III)
-- [ ] T080 [US2] Documentar diagrama de dependências entre módulos em `backend/docs/ARCHITECTURE.md` (refs: FR-003, FR-013)
+- [x] T078 [US2] Build test: cada módulo deve compilar/testar isoladamente (sem compilar outros) em `backend/` com `mvn clean verify -pl clinic-tenant-core` (refs: FR-014)
+- [x] T079 [US2] Verificar que clinic-tenant-core não importa de clinic-iam-core (vs vice versa permitido) em `backend/` (refs: Art. III)
+- [x] T080 [US2] Documentar diagrama de dependências entre módulos em `backend/docs/ARCHITECTURE.md` (refs: FR-003, FR-013)
 
 ### Phase 4.E: Observabilidade para US2
 
-- [ ] T081 [P] [US2] Implementar métricas Micrometer para CLI command execution time em `backend/clinic-shared-kernel/src/main/java/.../metrics/CLIMetrics.java` (refs: Art. II, Art. XI)
-- [ ] T082 [P] [US2] Adicionar logs JSON a cada CLI command entry/exit em `backend/clinic-gateway-app/src/main/java/.../cli/CliContextFilter.java` (refs: FR-010, FR-011)
+- [x] T081 [P] [US2] Implementar métricas Micrometer para CLI command execution time em `backend/clinic-shared-kernel/src/main/java/.../metrics/CLIMetrics.java` (refs: Art. II, Art. XI)
+- [x] T082 [P] [US2] Adicionar logs JSON a cada CLI command entry/exit em `backend/clinic-gateway-app/src/main/java/.../cli/CliContextFilter.java` (refs: FR-010, FR-011)
 
 ### Phase 4.F: Validação Constitucional de US2
 
-- [ ] T083 [US2] Executar /speckit.checklist para validar conformidade de US2 (Art. III, Art. II, Art. XIII) em `backend/` (refs: Art. XIX)
-- [ ] T084 [US2] Validar que cada novo módulo tem SBOM em setup de release CI/CD (refs: Art. XVI)
+- [x] T083 [US2] Executar /speckit.checklist para validar conformidade de US2 (Art. III, Art. II, Art. XIII) em `backend/` (refs: Art. XIX)
+- [x] T084 [US2] Validar que cada novo módulo tem SBOM em setup de release CI/CD (refs: Art. XVI)
 
 **Checkpoint**: US2 concluída - módulos independentes, contratos definidos, CLI completa, CI/CD com SBOM
 
@@ -226,39 +226,39 @@ Nota de governanca: por aprovacao explicita do usuario em 2026-04-05, a execucao
 
 ### Phase 5.A: Testes para IAM (MANDATORY - TDD)
 
-- [ ] T085 [P] [US3] Unit test para BCryptPasswordEncoder (hash + verify) em `backend/clinic-iam-core/src/test/java/.../BCryptPasswordTest.java` (refs: FR-006, research.md)
-- [ ] T086 [P] [US3] Unit test para SessionManager (create, validate, revoke) em `backend/clinic-iam-core/src/test/java/.../SessionManagerTest.java` (refs: FR-007, FR-010a)
-- [ ] T087 [P] [US3] Integration test com RLS: criar 2 sessions em 2 tenants distintos, verificar que cada sessão filtra dados por tenant via RLS em `backend/.../integration/SessionIsolationRLSTest.java` (refs: Art. 0, FR-007)
-- [ ] T088 [P] [US3] Contract test para auth.login endpoint com validação de tenant_id + email + password em `backend/clinic-iam-core/src/test/.../contract/AuthLoginContractTest.java` (refs: FR-006a)
-- [ ] T089 [P] [US3] Contract test para CLI auth login/logout/whoami com suporte --json em `backend/clinic-iam-core/src/test/.../contract/AuthCLIContractTest.java` (refs: FR-004, Art. II, Art. XXII)
-- [ ] T090 [P] [US3] Integration test: login falha quando tenant_id é inválido/ausente em `backend/.../integration/AuthTenantBoundaryTest.java` (refs: FR-006a, Art. XXII)
-- [ ] T091 [P] [US3] Integration test: logout revoga sessão imediatamente (próxima requisição com mesmo session_id falha) em `backend/.../integration/SessionRevocationTest.java` (refs: FR-007)
+- [x] T085 [P] [US3] Unit test para BCryptPasswordEncoder (hash + verify) em `backend/clinic-iam-core/src/test/java/.../BCryptPasswordTest.java` (refs: FR-006, research.md)
+- [x] T086 [P] [US3] Unit test para SessionManager (create, validate, revoke) em `backend/clinic-iam-core/src/test/java/.../SessionManagerTest.java` (refs: FR-007, FR-010a)
+- [x] T087 [P] [US3] Integration test com RLS: criar 2 sessions em 2 tenants distintos, verificar que cada sessão filtra dados por tenant via RLS em `backend/.../integration/SessionIsolationRLSTest.java` (refs: Art. 0, FR-007)
+- [x] T088 [P] [US3] Contract test para auth.login endpoint com validação de tenant_id + email + password em `backend/clinic-iam-core/src/test/.../contract/AuthLoginContractTest.java` (refs: FR-006a)
+- [x] T089 [P] [US3] Contract test para CLI auth login/logout/whoami com suporte --json em `backend/clinic-iam-core/src/test/.../contract/AuthCLIContractTest.java` (refs: FR-004, Art. II, Art. XXII)
+- [x] T090 [P] [US3] Integration test: login falha quando tenant_id é inválido/ausente em `backend/.../integration/AuthTenantBoundaryTest.java` (refs: FR-006a, Art. XXII)
+- [x] T091 [P] [US3] Integration test: logout revoga sessão imediatamente (próxima requisição com mesmo session_id falha) em `backend/.../integration/SessionRevocationTest.java` (refs: FR-007)
 
 ### Phase 5.B: Implementação de IAM Interno
 
 #### 5.B.1: Modelos e Persistência
 
-- [ ] T092 [P] [US3] Criar entity IamUser em `backend/clinic-iam-core/src/main/java/.../domain/IamUser.java` com: tenant_id, username, email, password_hash, is_active, last_login_at (refs: FR-006, FR-006a)
-- [ ] T093 [P] [US3] Criar entity IamRole em `backend/clinic-iam-core/src/main/java/.../domain/IamRole.java` com: tenant_id, role_key, description (refs: FR-006)
-- [ ] T094 [P] [US3] Criar entity IamSession em `backend/clinic-iam-core/src/main/java/.../domain/IamSession.java` com: id (uuid token), tenant_id, user_id, issued_at, expires_at, revoked_at, client_ip, user_agent, trace_id (refs: FR-007, FR-010a)
-- [ ] T095 [P] [US3] Criar entity IamAuditEvent append-only em `backend/clinic-iam-core/src/main/java/.../domain/IamAuditEvent.java` com: tenant_id, actor_user_id, event_type, outcome, trace_id, metadata_json, created_at (refs: FR-011, Art. VI)
-- [ ] T096 [P] [US3] Criar repository interfaces (IamUserRepository, IamSessionRepository, IamAuditEventRepository) em `backend/clinic-iam-core/src/main/java/.../domain/` (refs: FR-013)
-- [ ] T097 [US3] Implementar repositories com Spring Data JPA + RLS-aware queries em `backend/clinic-iam-core/src/main/java/.../infrastructure/` (refs: Art. 0)
+- [x] T092 [P] [US3] Criar entity IamUser em `backend/clinic-iam-core/src/main/java/.../domain/IamUser.java` com: tenant_id, username, email, password_hash, is_active, last_login_at (refs: FR-006, FR-006a)
+- [x] T093 [P] [US3] Criar entity IamRole em `backend/clinic-iam-core/src/main/java/.../domain/IamRole.java` com: tenant_id, role_key, description (refs: FR-006)
+- [x] T094 [P] [US3] Criar entity IamSession em `backend/clinic-iam-core/src/main/java/.../domain/IamSession.java` com: id (uuid token), tenant_id, user_id, issued_at, expires_at, revoked_at, client_ip, user_agent, trace_id (refs: FR-007, FR-010a)
+- [x] T095 [P] [US3] Criar entity IamAuditEvent append-only em `backend/clinic-iam-core/src/main/java/.../domain/IamAuditEvent.java` com: tenant_id, actor_user_id, event_type, outcome, trace_id, metadata_json, created_at (refs: FR-011, Art. VI)
+- [x] T096 [P] [US3] Criar repository interfaces (IamUserRepository, IamSessionRepository, IamAuditEventRepository) em `backend/clinic-iam-core/src/main/java/.../domain/` (refs: FR-013)
+- [x] T097 [US3] Implementar repositories com Spring Data JPA + RLS-aware queries em `backend/clinic-iam-core/src/main/java/.../infrastructure/` (refs: Art. 0)
 
 #### 5.B.2: Serviços de Autenticação
 
-- [ ] T098 [P] [US3] Implementar PasswordService com BCrypt hashing (cost 12) em `backend/clinic-iam-core/src/main/java/.../application/PasswordService.java` com métodos: hashPassword, verifyPassword (refs: research.md, FR-006)
-- [ ] T099 [P] [US3] Implementar SessionManager em `backend/clinic-iam-core/src/main/java/.../application/SessionManager.java` com: createSession(user, tenantId, traceId), validateSession, revokeSession (refs: FR-007, FR-010a)
-- [ ] T100 [P] [US3] Implementar AuthenticationService em `backend/clinic-iam-core/src/main/java/.../application/AuthenticationService.java` com login, logout, whoami (refs: FR-005, FR-006a, Fr-007)
-- [ ] T101 [US3] Implementar AuditService em `backend/clinic-iam-core/src/main/java/.../application/AuditService.java` para registrar eventos de autenticação (login/logout/failed attempts) append-only (refs: FR-011, Art. VI)
+- [x] T098 [P] [US3] Implementar PasswordService com BCrypt hashing (cost 12) em `backend/clinic-iam-core/src/main/java/.../application/PasswordService.java` com métodos: hashPassword, verifyPassword (refs: research.md, FR-006)
+- [x] T099 [P] [US3] Implementar SessionManager em `backend/clinic-iam-core/src/main/java/.../application/SessionManager.java` com: createSession(user, tenantId, traceId), validateSession, revokeSession (refs: FR-007, FR-010a)
+- [x] T100 [P] [US3] Implementar AuthenticationService em `backend/clinic-iam-core/src/main/java/.../application/AuthenticationService.java` com login, logout, whoami (refs: FR-005, FR-006a, Fr-007)
+- [x] T101 [US3] Implementar AuditService em `backend/clinic-iam-core/src/main/java/.../application/AuditService.java` para registrar eventos de autenticação (login/logout/failed attempts) append-only (refs: FR-011, Art. VI)
 
 #### 5.B.3: HTTP Adapter para IAM
 
-- [ ] T102 [P] [US3] Criar AuthenticationFilter (Spring) que valida Authorization header (session UUID) em cada request em `backend/clinic-gateway-app/src/main/java/.../filters/AuthenticationFilter.java` (refs: FR-006a)
-- [ ] T103 [US3] Implementar endpoint POST /auth/login em `backend/clinic-gateway-app/src/main/java/.../api/AuthController.java` com body {email, password, tenant_id}, retorna {session_id, expires_at} (refs: FR-005, FR-006a)
-- [ ] T104 [US3] Implementar endpoint POST /auth/logout em `backend/clinic-gateway-app/src/main/java/.../api/AuthController.java` revoga sessão atual (refs: FR-007)
-- [ ] T105 [US3] Implementar endpoint GET /auth/whoami em `backend/clinic-gateway-app/src/main/java/.../api/AuthController.java` retorna {user_id, email, tenant_id, roles} (refs: FR-006a)
-- [ ] T106 [US3] Adicionar validação de request.session_id != null em AuthenticationFilter, retorna FHIR OperationOutcome se null (refs: FR-006a, Art. VI)
+- [x] T102 [P] [US3] Criar AuthenticationFilter (Spring) que valida Authorization header (session UUID) em cada request em `backend/clinic-gateway-app/src/main/java/.../filters/AuthenticationFilter.java` (refs: FR-006a)
+- [x] T103 [US3] Implementar endpoint POST /auth/login em `backend/clinic-gateway-app/src/main/java/.../api/AuthController.java` com body {email, password, tenant_id}, retorna {session_id, expires_at} (refs: FR-005, FR-006a)
+- [x] T104 [US3] Implementar endpoint POST /auth/logout em `backend/clinic-gateway-app/src/main/java/.../api/AuthController.java` revoga sessão atual (refs: FR-007)
+- [x] T105 [US3] Implementar endpoint GET /auth/whoami em `backend/clinic-gateway-app/src/main/java/.../api/AuthController.java` retorna {user_id, email, tenant_id, roles} (refs: FR-006a)
+- [x] T106 [US3] Adicionar validação de request.session_id != null em AuthenticationFilter, retorna FHIR OperationOutcome se null (refs: FR-006a, Art. VI)
 
 #### 5.B.4: CLI para IAM
 
@@ -373,7 +373,7 @@ Nota de governanca: por aprovacao explicita do usuario em 2026-04-05, a execucao
 
 ### Phase 6.J: Constitutional Final Verification
 
-- [ ] T165 [P] Executar `speckit.checklist` completo (19 gates constitucionais) e documentar evidence links em `backend/docs/CONSTITUTION_VERIFICATION.md` (refs: Art. XIX)
+- [x] T165 [P] Executar `speckit.checklist` completo (19 gates constitucionais) e documentar evidence links em `backend/docs/CONSTITUTION_VERIFICATION.md` (refs: Art. XIX)
 - [ ] T166 [P] Revisar Complexity Tracking em plan.md e validar que nenhuma violacao do Art. VIII foi introduzida (refs: Art. VIII)
 - [ ] T167 [P] Validar que todos FRs da spec.md foram mapeados a tasks completadas em tasks.md (rastreabilidade bidirecional) (refs: Art. IV)
 - [ ] T168 Assinar compliance gate: cada reviewer (arquitetura + compliance LGPD) assina "aprovado para produção" em PR (refs: Phase 2.d: T039)

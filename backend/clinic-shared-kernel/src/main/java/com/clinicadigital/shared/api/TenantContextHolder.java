@@ -1,30 +1,29 @@
 package com.clinicadigital.shared.api;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 @Component
-@RequestScope
 public class TenantContextHolder {
 
-    private TenantContext tenantContext;
+    private final ThreadLocal<TenantContext> tenantContext = new ThreadLocal<>();
 
     public void set(TenantContext tenantContext) {
-        this.tenantContext = tenantContext;
+        this.tenantContext.set(tenantContext);
     }
 
     public TenantContext getRequired() {
-        if (tenantContext == null) {
+        TenantContext current = tenantContext.get();
+        if (current == null) {
             throw new IllegalStateException("tenant context not initialized");
         }
-        return tenantContext;
+        return current;
     }
 
     public boolean isPresent() {
-        return tenantContext != null;
+        return tenantContext.get() != null;
     }
 
     public void clear() {
-        tenantContext = null;
+        tenantContext.remove();
     }
 }

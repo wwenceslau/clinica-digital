@@ -29,6 +29,37 @@
 }
 ```
 
+### Comando
+`tenant quota update`
+
+### Entrada
+- --tenant-id (obrigatorio)
+- --requests-per-minute (opcional)
+- --concurrency (opcional)
+- --storage-mb (opcional)
+- --json (opcional, recomendado)
+
+### Comando
+`tenant block`
+
+### Entrada
+- --tenant-id (obrigatorio)
+- --json (opcional, recomendado)
+
+### Comando
+`tenant unblock`
+
+### Entrada
+- --tenant-id (obrigatorio)
+- --json (opcional, recomendado)
+
+### Comando
+`quota check`
+
+### Entrada
+- --tenant-id (obrigatorio)
+- --json (opcional, recomendado)
+
 ## 2. Modulo iam-core-cli
 
 ### Comando
@@ -71,6 +102,24 @@
 }
 ```
 
+### Comando
+`auth whoami`
+
+### Entrada
+- --json (opcional)
+
+### Saida de sucesso (JSON)
+```json
+{
+  "user_id": "uuid",
+  "tenant_id": "uuid",
+  "roles": ["string"],
+  "trace_id": "string",
+  "operation": "auth.whoami",
+  "outcome": "success"
+}
+```
+
 ## 3. Modulo observability-cli
 
 ### Comando
@@ -85,9 +134,23 @@
 ```json
 {
   "trace_id": "string",
-  "tenant_id": "uuid",
   "propagation_status": "valid",
   "operation": "trace.validate",
+  "outcome": "success"
+}
+```
+
+### Comando
+`metrics export`
+
+### Entrada
+- --json (opcional)
+
+### Saida de sucesso (JSON)
+```json
+{
+  "metrics": ["string"],
+  "operation": "metrics.export",
   "outcome": "success"
 }
 ```

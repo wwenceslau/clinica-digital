@@ -115,6 +115,14 @@ public class Tenant {
         }
     }
 
+    public void block() {
+        this.status = "blocked";
+    }
+
+    public void unblock() {
+        this.status = "active";
+    }
+
     @PrePersist
     void onCreate() {
         OffsetDateTime now = OffsetDateTime.now();

@@ -4,10 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       module:
-        description: 'Module to release (e.g., clinic-shared-kernel, clinic-tenant-core, clinic-iam-core, clinic-observability-core)'
+        description: 'Module to release (e.g., clinic-platform-bom, clinic-shared-kernel, clinic-tenant-core, clinic-iam-core, clinic-observability-core, clinic-gateway-app)'
         required: true
         type: choice
         options:
+          - clinic-platform-bom
           - clinic-shared-kernel
           - clinic-tenant-core
           - clinic-iam-core
@@ -55,6 +56,7 @@ jobs:
         run: |
           mvn clean package \
             -pl ${{ github.event.inputs.module }} \
+            -am \
             -Pquality \
             -DskipTests=false \
             -Drevision=${{ github.event.inputs.version }}
@@ -126,6 +128,7 @@ jobs:
           ## Build Checklist
           
           - [x] Module compiled with Java 21
+          - [x] Reactor dependencies resolved with `-am` for module-local releases
           - [x] Quality checks executed (SpotBugs, SonarQube)
           - [x] Unit tests passed (≥80% coverage)
           - [x] SBOM generated and validated

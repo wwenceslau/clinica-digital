@@ -1,30 +1,30 @@
 package com.clinicadigital.shared.api;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 @Component
-@RequestScope
 public class TraceContextHolder {
 
-    private TraceContext traceContext;
+    private final ThreadLocal<TraceContext> traceContext = new ThreadLocal<>();
 
     public void set(TraceContext traceContext) {
-        this.traceContext = traceContext;
+        this.traceContext.set(traceContext);
     }
 
     public TraceContext getOrCreate() {
-        if (traceContext == null) {
-            traceContext = TraceContext.generate();
+        TraceContext current = traceContext.get();
+        if (current == null) {
+            current = TraceContext.generate();
+            traceContext.set(current);
         }
-        return traceContext;
+        return current;
     }
 
     public boolean isPresent() {
-        return traceContext != null;
+        return traceContext.get() != null;
     }
 
     public void clear() {
-        traceContext = null;
+        traceContext.remove();
     }
 }

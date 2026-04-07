@@ -27,6 +27,7 @@ pnpm-debug.log*
 .vscode/
 .idea/
 *.iml
+PDFs/
 
 # OS / temporary files
 .DS_Store

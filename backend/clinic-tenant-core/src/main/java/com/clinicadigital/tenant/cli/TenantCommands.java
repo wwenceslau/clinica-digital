@@ -134,6 +134,98 @@ public class TenantCommands {
         }
     }
 
+    @ShellMethod(key = "tenant quota update", value = "Update tenant quota limits")
+    public String updateQuota(
+            @ShellOption(value = "--tenant-id", help = "Tenant id (required)") UUID tenantId,
+            @ShellOption(value = "--requests-per-minute", help = "Requests per minute limit", defaultValue = ShellOption.NULL) Integer requestsPerMinute,
+            @ShellOption(value = "--concurrency", help = "Concurrent request limit", defaultValue = ShellOption.NULL) Integer concurrency,
+            @ShellOption(value = "--storage-mb", help = "Storage limit in MB", defaultValue = ShellOption.NULL) Integer storageMb,
+            @ShellOption(value = "--json", help = "Output as structured JSON", defaultValue = "false") boolean json
+    ) {
+        String traceId = TraceContext.generate().traceId();
+        TenantContextStore.set(TenantContext.from(tenantId));
+        try {
+            Tenant updated = tenantService.updateQuota(tenantId, requestsPerMinute, concurrency, storageMb);
+            if (json) {
+                return "{\n" +
+                       "  \"tenant_id\": \"" + updated.getId() + "\",\n" +
+                       "  \"quota_requests_per_minute\": " + updated.getQuotaRequestsPerMinute() + ",\n" +
+                       "  \"quota_concurrency\": " + updated.getQuotaConcurrency() + ",\n" +
+                       "  \"quota_storage_mb\": " + updated.getQuotaStorageMb() + ",\n" +
+                       "  \"trace_id\": \"" + traceId + "\",\n" +
+                       "  \"operation\": \"tenant.quota.update\",\n" +
+                       "  \"outcome\": \"success\"\n" +
+                       "}";
+            }
+            return "Updated quota for tenant: " + updated.getId();
+        } catch (Exception ex) {
+            if (json) {
+                return buildErrorJson(sanitize(ex.getMessage()), traceId, "tenant.quota.update");
+            }
+            return "Error: " + ex.getMessage();
+        } finally {
+            TenantContextStore.clear();
+        }
+    }
+
+    @ShellMethod(key = "tenant block", value = "Block tenant operations")
+    public String block(
+            @ShellOption(value = "--tenant-id", help = "Tenant id (required)") UUID tenantId,
+            @ShellOption(value = "--json", help = "Output as structured JSON", defaultValue = "false") boolean json
+    ) {
+        String traceId = TraceContext.generate().traceId();
+        TenantContextStore.set(TenantContext.from(tenantId));
+        try {
+            Tenant blocked = tenantService.blockTenant(tenantId);
+            if (json) {
+                return "{\n" +
+                       "  \"tenant_id\": \"" + blocked.getId() + "\",\n" +
+                       "  \"status\": \"" + blocked.getStatus() + "\",\n" +
+                       "  \"trace_id\": \"" + traceId + "\",\n" +
+                       "  \"operation\": \"tenant.block\",\n" +
+                       "  \"outcome\": \"success\"\n" +
+                       "}";
+            }
+            return "Blocked tenant: " + blocked.getId();
+        } catch (Exception ex) {
+            if (json) {
+                return buildErrorJson(sanitize(ex.getMessage()), traceId, "tenant.block");
+            }
+            return "Error: " + ex.getMessage();
+        } finally {
+            TenantContextStore.clear();
+        }
+    }
+
+    @ShellMethod(key = "tenant unblock", value = "Unblock tenant operations")
+    public String unblock(
+            @ShellOption(value = "--tenant-id", help = "Tenant id (required)") UUID tenantId,
+            @ShellOption(value = "--json", help = "Output as structured JSON", defaultValue = "false") boolean json
+    ) {
+        String traceId = TraceContext.generate().traceId();
+        TenantContextStore.set(TenantContext.from(tenantId));
+        try {
+            Tenant unblocked = tenantService.unblockTenant(tenantId);
+            if (json) {
+                return "{\n" +
+                       "  \"tenant_id\": \"" + unblocked.getId() + "\",\n" +
+                       "  \"status\": \"" + unblocked.getStatus() + "\",\n" +
+                       "  \"trace_id\": \"" + traceId + "\",\n" +
+                       "  \"operation\": \"tenant.unblock\",\n" +
+                       "  \"outcome\": \"success\"\n" +
+                       "}";
+            }
+            return "Unblocked tenant: " + unblocked.getId();
+        } catch (Exception ex) {
+            if (json) {
+                return buildErrorJson(sanitize(ex.getMessage()), traceId, "tenant.unblock");
+            }
+            return "Error: " + ex.getMessage();
+        } finally {
+            TenantContextStore.clear();
+        }
+    }
+
     private static String buildErrorJson(String diagnostics, String traceId, String operation) {
         return "{\n" +
                "  \"issue\": [\n" +

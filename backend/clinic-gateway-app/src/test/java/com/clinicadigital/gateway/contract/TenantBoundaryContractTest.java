@@ -39,6 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 class TenantBoundaryContractTest {
 
+        private static final String TRACE_HEADER = "X-Trace-ID";
+
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES =
@@ -116,5 +118,36 @@ class TenantBoundaryContractTest {
         assertThat(response.getStatusCode())
                 .as("FR-002a: empty X-Tenant-ID must be rejected with 403")
                 .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void requestWithoutTraceIdMustReceiveGeneratedTraceHeader() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Tenant-ID", UUID.randomUUID().toString());
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/tenants", HttpMethod.GET, request, String.class);
+
+        assertThat(response.getHeaders().getFirst(TRACE_HEADER))
+                .as("FR-010a: boundary must generate X-Trace-ID when absent")
+                .isNotBlank()
+                .startsWith("trace-");
+    }
+
+    @Test
+    void requestWithValidTraceIdMustPreserveResponseHeader() {
+        String traceId = "trace-550e8400-e29b-41d4-a716-446655440000";
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Tenant-ID", UUID.randomUUID().toString());
+        headers.set(TRACE_HEADER, traceId);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/tenants", HttpMethod.GET, request, String.class);
+
+        assertThat(response.getHeaders().getFirst(TRACE_HEADER))
+                .as("FR-010a: boundary must preserve a valid incoming X-Trace-ID")
+                .isEqualTo(traceId);
     }
 }
