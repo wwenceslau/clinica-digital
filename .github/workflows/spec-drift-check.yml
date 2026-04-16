@@ -1,0 +1,19 @@
+name: Spec Drift Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  spec-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify spec-plan-tasks consistency
+        shell: bash
+        run: |
+          bash scripts/drift-verify.sh
