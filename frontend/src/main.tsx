@@ -1,10 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { CssBaseline } from '@mui/material';
 import './index.css';
-
-function App() {
-  return <h1>Clinica Digital</h1>;
-}
+import './i18n/config';
+import App from './app/App';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

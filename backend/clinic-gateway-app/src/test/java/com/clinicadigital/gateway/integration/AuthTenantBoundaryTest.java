@@ -47,7 +47,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 class AuthTenantBoundaryTest {
 
-    @Container
+    @SuppressWarnings("resource")
+@Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:15-alpine")

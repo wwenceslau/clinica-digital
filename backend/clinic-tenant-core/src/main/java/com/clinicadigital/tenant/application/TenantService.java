@@ -90,6 +90,35 @@ public class TenantService {
         return saved;
     }
 
+    @Transactional
+    public Tenant updateTenant(UUID tenantId, String slug, String legalName, String planTier) {
+        logInfo("tenant.update", "started", tenantId, "updating tenant details");
+        Tenant tenant = getTenant(tenantId);
+
+        if (slug != null && !slug.equals(tenant.getSlug())) {
+            tenantRepository.findBySlug(slug)
+                    .ifPresent(existing -> {
+                        if (!existing.getId().equals(tenantId)) {
+                            logWarn("tenant.update", "failure", tenantId, "tenant slug already exists: " + slug);
+                            throw new IllegalArgumentException("Tenant slug already exists: " + slug);
+                        }
+                    });
+        }
+
+        tenant.updateDetails(slug, legalName, planTier);
+        Tenant saved = tenantRepository.save(tenant);
+        logInfo("tenant.update", "success", tenantId, "tenant updated");
+        return saved;
+    }
+
+    @Transactional
+    public void deleteTenant(UUID tenantId) {
+        logInfo("tenant.delete", "started", tenantId, "deleting tenant");
+        getTenant(tenantId);
+        tenantRepository.deleteById(tenantId);
+        logInfo("tenant.delete", "success", tenantId, "tenant deleted");
+    }
+
     private void logInfo(String operation, String outcome, UUID tenantId, String message) {
         withStructuredContext(operation, outcome, tenantId, () -> LOGGER.info(message));
     }

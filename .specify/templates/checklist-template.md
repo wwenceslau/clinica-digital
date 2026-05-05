@@ -38,3 +38,32 @@
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+---
+
+## Domain Conventions
+
+### "Migration Aplicada" — Definição Objetiva
+
+> **Uma migration só é considerada "aplicada" quando o Flyway a executou contra o banco de dados persistente real** (não apenas em Testcontainers ou em arquivos commitados no repositório).
+
+**Critério verificável**: linha em `flyway_schema_history` com `success = true`.
+
+**Consulta de verificação**:
+```sql
+SELECT version, description, installed_on, success
+FROM flyway_schema_history
+ORDER BY installed_rank;
+```
+
+**Evidência mínima exigida nos Gates**: log de startup do Spring Boot com a linha:
+```
+Successfully applied N migrations to schema "public", now at version vXXX
+```
+
+**Por que isso importa**: Arquivos `.sql` commitados no repositório representam a *intenção* de migration, não sua *execução*. O Flyway só aplica as migrations quando a aplicação é iniciada contra o banco de destino. Gates de "migrations aplicadas" **devem** exigir evidência de execução real.
+
+**Como gerar a evidência**:
+1. Iniciar o gateway com `SPRING_PROFILES_ACTIVE=dev IAM_PII_KEY_V1=<valor> mvn -pl clinic-gateway-app spring-boot:run`
+2. Capturar o log de startup com as linhas Flyway
+3. Confirmar no banco: `SELECT version, success FROM flyway_schema_history WHERE success = true ORDER BY installed_rank`

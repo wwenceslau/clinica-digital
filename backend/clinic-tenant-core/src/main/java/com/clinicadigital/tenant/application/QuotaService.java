@@ -3,6 +3,7 @@ package com.clinicadigital.tenant.application;
 import com.clinicadigital.tenant.domain.ITenantRepository;
 import com.clinicadigital.tenant.domain.Tenant;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -24,6 +25,7 @@ public class QuotaService {
         this.tenantRepository = tenantRepository;
     }
 
+    @Transactional
     public void checkAndEnforceQuota(UUID tenantId, String metric) {
         if (tenantId == null) {
             throw new IllegalArgumentException("tenantId must not be null");
@@ -46,6 +48,7 @@ public class QuotaService {
         }
     }
 
+    @Transactional(readOnly = true)
     public QuotaCheckResult checkQuota(UUID tenantId, String metric) {
         if (tenantId == null) {
             throw new IllegalArgumentException("tenantId must not be null");

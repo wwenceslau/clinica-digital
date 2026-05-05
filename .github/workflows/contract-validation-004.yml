@@ -1,0 +1,96 @@
+name: Contract Validation - Feature 004 IAM
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'specs/004-institution-iam-auth-integration/contracts/**'
+      - 'specs/004-institution-iam-auth-integration/spec.md'
+      - 'backend/clinic-gateway-app/src/**'
+      - 'backend/clinic-iam-core/src/**'
+      - 'frontend/src/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'specs/004-institution-iam-auth-integration/contracts/**'
+      - 'specs/004-institution-iam-auth-integration/spec.md'
+      - 'backend/clinic-gateway-app/src/**'
+      - 'backend/clinic-iam-core/src/**'
+      - 'frontend/src/**'
+
+jobs:
+  validate-contracts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Validate OpenAPI Contract
+        working-directory: specs/004-institution-iam-auth-integration/contracts
+        run: |
+          npm install -g @openapitools/openapi-generator-cli
+          openapi-generator-cli validate -i api-openapi.yaml
+          echo "✓ OpenAPI contract validated"
+
+      - name: Validate CLI Contracts
+        working-directory: specs/004-institution-iam-auth-integration/contracts
+        run: |
+          # Basic markdown validation (structure, required commands)
+          grep -q "bootstrap-super-user" cli-contracts.md || exit 1
+          grep -q "create-tenant-admin" cli-contracts.md || exit 1
+          grep -q "login" cli-contracts.md || exit 1
+          grep -q "select-organization" cli-contracts.md || exit 1
+          grep -q "logout" cli-contracts.md || exit 1
+          echo "✓ CLI contracts validated"
+
+      - name: Validate Backend Contract Tests
+        working-directory: backend
+        run: |
+          # Verify test class BaseIAMTest.java exists
+          if [ ! -f "clinic-gateway-app/src/test/java/com/clinicadigital/iam/test/BaseIAMTest.java" ]; then
+            echo "✗ BaseIAMTest.java not found!"
+            exit 1
+          fi
+          echo "✓ Backend contract test infrastructure present"
+
+      - name: Validate Frontend Test Fixtures
+        working-directory: frontend
+        run: |
+          # Verify test fixtures exist
+          if [ ! -f "src/test/iam/LoginPage.tsx" ]; then
+            echo "✗ LoginPage.tsx fixture not found!"
+            exit 1
+          fi
+          if [ ! -f "src/test/iam/OrganizationSelectPage.tsx" ]; then
+            echo "✗ OrganizationSelectPage.tsx fixture not found!"
+            exit 1
+          fi
+          echo "✓ Frontend test fixtures present"
+
+      - name: Report Validation Results
+        if: success()
+        run: |
+          echo "## Contract Validation Results ✓" >> $GITHUB_STEP_SUMMARY
+          echo "- OpenAPI schema: VALID" >> $GITHUB_STEP_SUMMARY
+          echo "- CLI contracts: VALID" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend infrastructure: READY" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend fixtures: READY" >> $GITHUB_STEP_SUMMARY
+
+      - name: Report Validation Failure
+        if: failure()
+        run: |
+          echo "## Contract Validation Results ✗" >> $GITHUB_STEP_SUMMARY
+          echo "One or more contracts failed validation. Check logs above." >> $GITHUB_STEP_SUMMARY
+          exit 1

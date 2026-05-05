@@ -5,12 +5,14 @@ import com.clinicadigital.tenant.domain.Tenant;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
+@Transactional
 public class TenantRepository implements ITenantRepository {
 
     @PersistenceContext
@@ -48,5 +50,13 @@ public class TenantRepository implements ITenantRepository {
             return tenant;
         }
         return entityManager.merge(tenant);
+    }
+
+    @Override
+    public void deleteById(UUID tenantId) {
+        Tenant tenant = entityManager.find(Tenant.class, tenantId);
+        if (tenant != null) {
+            entityManager.remove(tenant);
+        }
     }
 }

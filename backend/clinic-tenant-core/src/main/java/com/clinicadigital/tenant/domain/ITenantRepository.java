@@ -13,4 +13,6 @@ public interface ITenantRepository {
     List<Tenant> findAll();
 
     Tenant save(Tenant tenant);
+
+    void deleteById(UUID tenantId);
 }

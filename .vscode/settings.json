@@ -10,7 +10,22 @@
         ".specify/scripts/bash/": true,
         ".specify/scripts/powershell/": true
     },
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.jdt.ls.java.home": "C:\\Program Files\\Microsoft\\jdk-25.0.2.10-hotspot",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-21",
+            "path": "C:\\Program Files\\Microsoft\\jdk-21.0.8.9-hotspot"
+        },
+        {
+            "name": "JavaSE-25",
+            "path": "C:\\Program Files\\Microsoft\\jdk-25.0.2.10-hotspot",
+            "default": true
+        }
+    ],
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "maven.executable.preferMavenWrapper": true,
+    "typescript.tsdk": "frontend/node_modules/typescript/lib",
+    "js/ts.tsdk.path": "frontend/node_modules/typescript/lib"
 }
 

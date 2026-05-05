@@ -12,6 +12,9 @@
 	--shell-spacing-sm: 8px;
 	--shell-spacing-md: 16px;
 	--shell-spacing-lg: 24px;
+	/* canonical aliases (T049) */
+	--primary: var(--shell-color-primary);
+	--background: var(--canvas);
 }
 
 :root[data-theme='dark'] {
@@ -26,6 +29,9 @@
 	--shell-spacing-sm: 8px;
 	--shell-spacing-md: 16px;
 	--shell-spacing-lg: 24px;
+	/* canonical aliases (T049) */
+	--primary: var(--shell-color-primary);
+	--background: var(--canvas);
 }
 
 :root {

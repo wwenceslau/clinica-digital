@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,14 +32,28 @@ public class TenantController {
         this.tenantContextHolder = tenantContextHolder;
     }
 
+    /**
+     * @deprecated Use POST /api/admin/tenants (AdminTenantController) which requires
+     *             authentication and provisions the full tenant + admin practitioner.
+     *             This unauthenticated endpoint will be removed in a future release.
+     */
+    @Deprecated(since = "phase-15", forRemoval = true)
     @PostMapping("/create")
     public ResponseEntity<TenantResponse> createTenant(@Valid @RequestBody CreateTenantRequest request) {
         Tenant created = tenantService.createTenant(request.slug(), request.legalName(), request.planTier());
         return ResponseEntity.status(HttpStatus.CREATED).body(TenantResponse.from(created));
     }
 
+    @GetMapping
+    public ResponseEntity<List<TenantResponse>> listTenants() {
+        List<TenantResponse> tenants = tenantService.listTenants().stream()
+                .map(TenantResponse::from)
+                .toList();
+        return ResponseEntity.ok(tenants);
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<TenantResponse> getTenant(@PathVariable UUID id) {
+    public ResponseEntity<TenantResponse> getTenant(@PathVariable("id") UUID id) {
         UUID contextTenantId = tenantContextHolder.getRequired().tenantId();
         if (!id.equals(contextTenantId)) {
             throw new InvalidTenantContextException("tenant context invalid: path tenant does not match context tenant");

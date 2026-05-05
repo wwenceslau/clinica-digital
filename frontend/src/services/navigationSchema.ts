@@ -32,6 +32,7 @@ export function ensureSecurityDomain(schema: SidebarDomainSchema): SidebarDomain
       {
         domain_id: "seguranca",
         domain_label_key: "sidebar.domain.security",
+        icon_id: "lock",
         resources: [
           {
             resource_id: "internal-user-management",
@@ -46,7 +47,7 @@ export function ensureSecurityDomain(schema: SidebarDomainSchema): SidebarDomain
           {
             resource_id: "access-profiles",
             label_key: "sidebar.security.access-profiles",
-            icon_id: "security",
+            icon_id: "verified_user",
             route: "/admin/security/roles",
             domain_id: "seguranca",
             permission_key: "perm.security:read:access-profiles",
@@ -109,6 +110,7 @@ export function getDefaultNavigationSchema(tenantId: string): SidebarDomainSchem
       {
         domain_id: "administracao",
         domain_label_key: "sidebar.domain.administration",
+        icon_id: "admin_panel_settings",
         resources: [
           {
             resource_id: "tenant-settings",
@@ -124,6 +126,7 @@ export function getDefaultNavigationSchema(tenantId: string): SidebarDomainSchem
       {
         domain_id: "seguranca",
         domain_label_key: "sidebar.domain.security",
+        icon_id: "lock",
         resources: [
           {
             resource_id: "internal-user-management",
@@ -137,7 +140,7 @@ export function getDefaultNavigationSchema(tenantId: string): SidebarDomainSchem
           {
             resource_id: "access-profiles",
             label_key: "sidebar.security.access-profiles",
-            icon_id: "security",
+            icon_id: "verified_user",
             route: "/admin/security/roles",
             domain_id: "seguranca",
             permission_key: "perm.security:read:access-profiles",

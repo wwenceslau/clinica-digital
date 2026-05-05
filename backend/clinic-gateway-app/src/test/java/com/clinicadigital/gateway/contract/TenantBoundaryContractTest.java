@@ -41,7 +41,8 @@ class TenantBoundaryContractTest {
 
         private static final String TRACE_HEADER = "X-Trace-ID";
 
-    @Container
+    @SuppressWarnings("resource")
+@Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:15-alpine")

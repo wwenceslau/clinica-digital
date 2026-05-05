@@ -27,7 +27,7 @@ public record OperationOutcome(List<Issue> issue) {
         INFORMATION
     }
 
-    public record Issue(Severity severity, String code, String diagnostics) {
+    public record Issue(Severity severity, String code, Details details, String diagnostics) {
 
         public Issue {
             if (severity == null) {
@@ -36,8 +36,24 @@ public record OperationOutcome(List<Issue> issue) {
             if (code == null || code.isBlank()) {
                 throw new IllegalArgumentException("code must not be blank");
             }
+            if (details == null) {
+                throw new IllegalArgumentException("details must not be null");
+            }
             if (diagnostics == null || diagnostics.isBlank()) {
                 throw new IllegalArgumentException("diagnostics must not be blank");
+            }
+        }
+
+        public Issue(Severity severity, String code, String diagnostics) {
+            this(severity, code, new Details(diagnostics), diagnostics);
+        }
+    }
+
+    public record Details(String text) {
+
+        public Details {
+            if (text == null || text.isBlank()) {
+                throw new IllegalArgumentException("details.text must not be blank");
             }
         }
     }
@@ -47,6 +63,11 @@ public record OperationOutcome(List<Issue> issue) {
 
         public Builder addIssue(Severity severity, String code, String diagnostics) {
             issues.add(new Issue(severity, code, diagnostics));
+            return this;
+        }
+
+        public Builder addIssue(Severity severity, String code, Details details, String diagnostics) {
+            issues.add(new Issue(severity, code, details, diagnostics));
             return this;
         }
 

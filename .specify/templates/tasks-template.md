@@ -29,6 +29,12 @@ description: "Task list template for feature implementation"
 - Task set MUST include RBAC mapping and service-layer permission enforcement tasks.
 - Task set MUST include Sanitization and Validation Gate tasks for each ingress boundary.
 - Before marking any task complete, agent MUST execute checklist-based self-verification.
+- Every task MUST include a machine-verifiable **DoD** field with at least one command (tsc --noEmit,
+  npx vitest run <test>, grep -rn "import.*<Artefato>" src/, npx playwright test <spec>). Tasks
+  without a verifiable DoD field are INVALID and MUST be corrected before the plan is approved.
+  (Principle XXIII — Task Definition of Done Mandate).
+- Every non-setup task MUST include a **Depends on** field listing prerequisite task IDs. Omitting
+  dependencies is only allowed for genuinely parallel Phase 1 setup tasks (Principle XXIII).
 - Complex technology/integration efforts MUST include `research.md` validation tasks.
 - Incident/QA fixes MUST include `spec.md` Edge Cases update tasks before code fixes.
 - Authentication and session management MUST be implemented entirely in-app; any task
@@ -41,6 +47,18 @@ description: "Task list template for feature implementation"
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - Include exact file paths in descriptions
+
+### Mandatory Task Block Format (Principle XXIII)
+
+Every task MUST use this extended format (two sub-lines after the checkbox):
+
+```markdown
+- [ ] T014 [US1] Implement LocationSelector molecule in frontend/src/components/molecules/LocationSelector.tsx (refs: FR-005)
+  **DoD**: file exists at declared path + `npx vitest run LocationPersistence.test` passes + `grep -rn LocationSelector frontend/src/components/organisms/Header.tsx` returns ≥1 match + `tsc --noEmit` exits 0
+  **Depends on**: T031 (Header.test.tsx written and failing), T032 (LocationPersistence.test.tsx written and failing), T012 (locationPersistence.ts service)
+```
+
+Tasks missing **DoD** or **Depends on** are INVALID and block the task set from being approved.
 
 ## Path Conventions
 

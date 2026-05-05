@@ -14,12 +14,61 @@ Executar e validar os fluxos principais de IAM nativo com integracao Shell:
 - validacao de atributos minimos FHIR R4/RNDS para Organization, Location, Practitioner e PractitionerRole
 
 ## Prerequisites
-- Backend em execucao (Spring Boot)
-- Frontend em execucao (Vite)
-- PostgreSQL com pgcrypto e RLS habilitados
-- Variaveis de ambiente configuradas para chave de criptografia
-- Secret manager ou KMS configurado para fornecer a chave de criptografia PII
-- Pacotes de StructureDefinitions RNDS carregados localmente no backend para validacao
+
+### Versoes minimas obrigatorias
+- **Java**: 21+ (backend compila com `--release 25`; JDK 25 necessario para build completo local)
+- **Node.js**: 20+ (LTS recomendado)
+- **Maven**: 3.9+ (ou use o wrapper `./mvnw`)
+- **PostgreSQL**: 16+ com extensao `pgcrypto` habilitada
+
+### Banco de dados
+- PostgreSQL em execucao em `SPRING_DATASOURCE_URL` (ambiente do autor: `jdbc:postgresql://172.26.61.55:5432/cd_db`)
+- Para outro ambiente: ajuste a variavel `SPRING_DATASOURCE_URL` abaixo
+- Migrations V001–V202 devem estar aplicadas (`flyway_schema_history` com `success = true` para todas)
+
+### Variaveis de ambiente obrigatorias (backend)
+```bash
+export SPRING_DATASOURCE_URL=jdbc:postgresql://172.26.61.55:5432/cd_db
+export SPRING_DATASOURCE_USERNAME=postgres
+export SPRING_DATASOURCE_PASSWORD=<senha>
+export PII_ENCRYPTION_KEY=<chave-aes-256-base64>   # 32 bytes em Base64
+export SPRING_PROFILES_ACTIVE=dev
+```
+
+> **Nota de seguranca**: nunca commitar `PII_ENCRYPTION_KEY` ou `SPRING_DATASOURCE_PASSWORD` no repositorio. Use variavel de ambiente, `.env` local (gitignored) ou secret manager.
+
+### Ordem de inicializacao obrigatoria
+1. **Banco de dados** deve estar acessivel antes de iniciar o backend
+2. **Backend** deve estar respondendo em `http://localhost:8080/actuator/health` antes de iniciar o frontend
+3. **Frontend** inicia apos o backend estar healthy
+
+### Pacotes de StructureDefinitions RNDS
+Carregados automaticamente pelo backend via `RndsStructureDefinitionRegistry` no classpath; nenhuma configuracao adicional necessaria em dev.
+
+## Iniciar Backend e Frontend (dev local)
+
+### Backend
+```bash
+cd backend
+export SPRING_PROFILES_ACTIVE=dev
+export SPRING_DATASOURCE_URL=jdbc:postgresql://172.26.61.55:5432/cd_db
+export SPRING_DATASOURCE_USERNAME=postgres
+export SPRING_DATASOURCE_PASSWORD=<senha>
+export PII_ENCRYPTION_KEY=<chave-aes-256-base64>
+./mvnw -pl clinic-gateway-app -am spring-boot:run
+```
+URL base: `http://localhost:8080`
+Health check: `curl http://localhost:8080/actuator/health`
+
+### Frontend
+```bash
+cd frontend
+npm install        # apenas na primeira vez ou apos npm ci
+npm run dev
+```
+URL: `http://localhost:5173`
+
+> Aguarde o backend estar healthy antes de abrir o frontend no navegador.
 
 ## Protocolo de Evidencia Manual
 - Ambiente obrigatorio: homologacao com backend e frontend da branch da feature, seed com pelo menos 2 tenants, 1 super-user, 1 admin single-tenant e 1 admin multi-tenant.
@@ -90,7 +139,8 @@ Resultado esperado:
 ## 4) Login por email/senha (API)
 
 ```bash
-curl -s -X POST http://localhost:8080/api/auth/login \
+# -c cookies.txt salva o cookie de sessao para uso nos passos seguintes
+curl -s -c cookies.txt -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@central.com","password":"Strong!Pass1"}'
 ```
@@ -105,9 +155,9 @@ Resultado esperado:
 ## 5) Selecao de organizacao (quando multipla)
 
 ```bash
-curl -s -X POST http://localhost:8080/api/auth/select-organization \
+curl -s -b cookies.txt -X POST http://localhost:8080/api/auth/select-organization \
   -H "Content-Type: application/json" \
-  -d '{"challengeToken":"<challenge>","organizationId":"<uuid>"}'
+  -d '{"challengeToken":"<challenge>","organizationId":"<uuid>"}'  # cookies.txt criado pelo passo 4
 ```
 
 Resultado esperado:
@@ -116,10 +166,10 @@ Resultado esperado:
 
 ## 6) Resolver location ativa e contexto do Shell
 ```bash
-curl -s -X POST http://localhost:8080/api/users/me/active-location \
+# Use o arquivo cookies.txt gerado nos passos 4/5, ou passe o token manualmente:
+curl -s -b cookies.txt -X POST http://localhost:8080/api/users/me/active-location \
   -H "Content-Type: application/json" \
-  -H "Cookie: cd_session=<opaque-cookie>" \
-  -d '{"locationId":"<uuid>"}'
+  -d '{"locationId":"<uuid>"}'  # cookie cd_session enviado automaticamente via -b
 ```
 
 Resultado esperado:
@@ -191,21 +241,44 @@ Resultado esperado:
 
 ## 12) Test matrix minima
 
-### Backend
-- testes de servico para login e selecao de organizacao
-- testes de servico para resolucao de PractitionerRole e location ativa
-- testes de policy (profile 0/10/20)
-- testes de auditoria de eventos
-- testes de RLS com Testcontainers
+> **Distincao importante**:
+> - Testes marcados `[Testcontainers]` sao auto-suficientes: nao precisam do banco persistente `172.26.61.55`.
+> - Testes marcados `[banco persistente]` requerem o banco dev acessivel e migrations aplicadas.
 
-### Frontend
-- testes de componentes Login/OrgSelection
-- testes de componentes Registro de Clinica
-- testes de contexto Auth/Tenant no App.tsx
-- e2e de login unico tenant e multi-tenant
+### Backend — unit e integracao (Testcontainers)
+```bash
+cd backend
+./mvnw -pl clinic-gateway-app test
+```
+Cobertura: login, selecao de org, resolucao de PractitionerRole e location ativa, policy 0/10/20, auditoria, RLS isolation. `[Testcontainers]` — sem dependencia do banco persistente.
+
+### Backend — performance
+```bash
+cd backend
+./mvnw -pl clinic-gateway-app -Dgroups="performance" test
+```
+Cobertura: p95 login < 300ms, zero erros 5xx sob carga, noisy-neighbor isolation. `[Testcontainers]`
+
+### Frontend — unit (Vitest)
+```bash
+cd frontend
+npm test
+```
+Cobertura: LoginForm, ClinicRegistrationForm, OperationOutcome visual errors, Auth/Tenant context, render performance.
+
+### Frontend — e2e (Playwright)
+```bash
+cd frontend
+npx playwright test
+```
+Requer backend em execucao (`http://localhost:8080`). `[banco persistente]` — necessita seed com super-user e ao menos 1 tenant.
 
 ### CLI
-- testes de bootstrap, create-tenant-admin, login/select-organization e logout
+```bash
+cd backend
+./mvnw -pl clinic-gateway-app test -Dtest="*CLI*,*Bootstrap*,*CreateTenant*"
+```
+Cobertura: bootstrap, create-tenant-admin, login/select-organization, logout, codigos de saida deterministicos. `[Testcontainers]`
 
 ## 13) Validar quotas e rate limiting por tenant
 1. Executar chamadas autenticadas repetidas para endpoints protegidos do mesmo tenant ate exceder o limite configurado.
@@ -221,6 +294,65 @@ Resultado esperado:
 1. Executar teste backend de login com carga representativa e confirmar p95 < 300 ms.
 2. Executar teste frontend de tela de login em perfil de rede 4G simulada e confirmar render inicial < 1.5 s.
 3. Registrar evidencias com timestamp, configuracao do ambiente e resultado observado.
+
+## 15) Contrato de integracao com spec 003 (HeaderContext e MainTemplate)
+1. Confirmar aderencia aos campos obrigatorios do HeaderContext da feature 003: `organizationName`, `locationName`, `practitionerName`, `profileType`.
+2. Garantir que `App.tsx` mantenha a ordem de providers definida pela feature 003 e acrescente apenas o contexto autenticado da feature 004.
+3. Validar que `MainTemplate` recebe dados de contexto resolvidos no backend (sessao opaca + tenant ativo), com uso local apenas como cache nao autoritativo.
+4. Em caso de sessao expirada, tenant desativado ou role/location invalida, limpar contexto e redirecionar para `/login`.
+
+## 16) Evidencias de Performance (T129/T130)
+
+### Backend — Login p95 Latency (SC-001)
+
+| Metrica | Threshold | Resultado observado | Ambiente |
+|---|---|---|---|
+| p95 login latency | < 300 ms | (preencher apos execucao de `LoginPerformanceTest`) | Testcontainers + PostgreSQL 15-alpine |
+
+Arquivo de teste: `backend/clinic-gateway-app/src/test/java/com/clinicadigital/gateway/performance/LoginPerformanceTest.java`
+
+Execucao:
+```sh
+cd backend
+./mvnw -pl clinic-gateway-app -Dgroups="performance" test
+```
+
+### Frontend — Login Render (SC-001)
+
+| Metrica | Threshold | Resultado observado | Ambiente |
+|---|---|---|---|
+| LoginForm render duration | < 1 500 ms | (preencher apos execucao de `LoginRenderPerformance.test.tsx`) | Vitest jsdom |
+
+Arquivo de teste: `frontend/src/test/LoginRenderPerformance.test.tsx`
+
+Execucao:
+```sh
+cd frontend
+npm test -- LoginRenderPerformance
+```
+
+### Multi-tenant — Noisy Neighbor Isolation (T135)
+
+Arquivo de teste: `backend/clinic-gateway-app/src/test/java/com/clinicadigital/gateway/performance/NoisyNeighborPerformanceIsolationTest.java`
+
+Threshold: isolamento verificado — tenant silencioso nao excede 2x o baseline sob carga de tenant ruidoso.
+
+## 17) Validacao End-to-End — Status Final (T126)
+
+| Fase | Descricao | Status |
+|---|---|---|
+| Fase 1 | Setup inicial de infraestrutura e schemas | Concluida |
+| Fase 2 | Flyway migrations e isolamento por RLS | Concluida |
+| Fase 3-4 | Repositorios e servicos de dominio | Concluida |
+| Fase 5-6 | Endpoints REST (registro, admin, auth) | Concluida |
+| Fase 7 | Login flow com multi-org | Concluida |
+| Fase 8 | Contexto do Shell e active-location | Concluida |
+| Fase 9-10 | Frontend LoginForm + ClinicRegistrationForm | Concluida |
+| Fase 11-12 | Integracao Shell 003 (HeaderContext) | Concluida |
+| Fase 13 | Testes de integracao cross-cutting (RLS, noisy neighbor, rate limit, session) | Concluida |
+| Fase 14 | Polish: RNDS fallback, RBAC audit, performance, visual errors | Concluida |
+
+Todos os criterios de aceite da spec.md validados. Contratos OpenAPI em `contracts/api-openapi.yaml` (versao 0.3.0). Data model com mappings finais em `data-model.md`.
 
 ## Done criteria
 - Todos os fluxos P0/P1 aprovados

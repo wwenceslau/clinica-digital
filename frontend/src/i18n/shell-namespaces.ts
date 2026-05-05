@@ -29,6 +29,22 @@ export const telemetryNamespaceKeys = ["telemetry.trace-id", "telemetry.tenant-i
 
 export const a11yNamespaceKeys = ["a11y.permission-restricted", "a11y.menu.open", "a11y.menu.close"] as const;
 
+/** US7: Error message i18n keys for RNDS/IAM errors. */
+export const errorNamespaceKeys = [
+  "error.rnds.unsupported-profile",
+  "error.rnds.structure-violation",
+  "error.rnds.throttled",
+  "error.rnds.cnes-invalid",
+  "error.rnds.cnes-already-registered",
+  "error.iam.invalid-credentials",
+  "error.iam.account-locked",
+  "error.iam.no-organizations",
+  "error.iam.session-expired",
+  "error.iam.forbidden",
+  "error.network.connection",
+  "error.generic",
+] as const;
+
 export const shellNamespaceKeys = [
   ...sidebarNamespaceKeys.domains,
   ...sidebarNamespaceKeys.administration,

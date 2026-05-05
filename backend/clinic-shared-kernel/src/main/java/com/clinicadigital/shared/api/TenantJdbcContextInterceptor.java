@@ -29,6 +29,23 @@ public class TenantJdbcContextInterceptor {
     }
 
     /**
+     * Sets the PostgreSQL session-local {@code app.crosslogin = 'true'} to
+     * enable the US4 cross-tenant login RLS policies.
+     *
+     * <p>Must be called <strong>within an open transaction</strong> because
+     * {@code set_config} with {@code is_local = true} (equivalent to SET LOCAL)
+     * is transaction-scoped and is automatically reset on commit or rollback.
+     *
+     * <p>This grants SELECT access on {@code iam_users} (by email),
+     * full DML on {@code iam_auth_challenges}, INSERT on {@code iam_sessions},
+     * and INSERT on {@code iam_audit_events} with null tenant_id.
+     */
+    public void applyLoginContext() {
+        // set_config(key, value, is_local) — is_local=true equals SET LOCAL
+        jdbc.execute("SELECT set_config('app.crosslogin', 'true', true)");
+    }
+
+    /**
      * Sets the PostgreSQL session-local {@code app.tenant_id} to the UUID held by
      * {@link TenantContextHolder} (HTTP requests) or {@link TenantContextStore}
      * (CLI, async, and scheduled contexts where request scope is not active).

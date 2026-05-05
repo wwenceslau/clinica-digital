@@ -30,6 +30,20 @@ public class TenantContextFilter extends OncePerRequestFilter {
     private static final String TENANT_HEADER = "X-Tenant-ID";
     private static final String TRACE_HEADER = "X-Trace-ID";
 
+    /**
+     * System tenant UUID used for public (unauthenticated) endpoints such as
+     * {@code /api/public/**} and system-level admin endpoints such as
+     * {@code /api/admin/tenants}. These endpoints do not carry a {@code X-Tenant-ID}
+     * header because they create a new tenant or operate across all tenants.
+     *
+     * <p>Exposed as package-visible so {@link AuthenticationFilter} can detect
+     * system-tenant context and pass {@code null} to {@link
+     * com.clinicadigital.iam.application.SessionManager#validateSession} — since
+     * super-user sessions are stored with {@code tenantId = null}.
+     */
+    static final UUID SYSTEM_TENANT_ID =
+            UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     private final ObjectProvider<TenantContextHolder> tenantContextHolderProvider;
     private final ObjectProvider<TraceContextHolder> traceContextHolderProvider;
     private final HandlerExceptionResolver handlerExceptionResolver;
@@ -45,6 +59,8 @@ public class TenantContextFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
+        // US4: /api/auth/** — tenant is unknown at login time; skip filter entirely
+        if (uri.startsWith("/api/auth/")) return true;
         return !(uri.startsWith("/api/") || uri.startsWith("/tenants") || uri.startsWith("/auth"));
     }
 
@@ -62,16 +78,21 @@ public class TenantContextFilter extends OncePerRequestFilter {
             response.setHeader(TRACE_HEADER, traceContext.traceId());
             MDC.put("trace_id", traceContext.traceId());
 
-            String rawTenantId = request.getHeader(TENANT_HEADER);
-            if (rawTenantId == null || rawTenantId.isBlank()) {
-                throw new TenantContextMissingException("tenant context missing: X-Tenant-ID header is required");
-            }
-
             UUID tenantId;
-            try {
-                tenantId = UUID.fromString(rawTenantId);
-            } catch (IllegalArgumentException ex) {
-                throw new InvalidTenantContextException("tenant context invalid: X-Tenant-ID must be a UUID");
+            if (isPublicPath(request.getRequestURI())) {
+                // Public endpoints (/api/public/**) operate under the system tenant context.
+                // They do not carry an X-Tenant-ID header because they create new tenants.
+                tenantId = SYSTEM_TENANT_ID;
+            } else {
+                String rawTenantId = request.getHeader(TENANT_HEADER);
+                if (rawTenantId == null || rawTenantId.isBlank()) {
+                    throw new TenantContextMissingException("tenant context missing: X-Tenant-ID header is required");
+                }
+                try {
+                    tenantId = UUID.fromString(rawTenantId);
+                } catch (IllegalArgumentException ex) {
+                    throw new InvalidTenantContextException("tenant context invalid: X-Tenant-ID must be a UUID");
+                }
             }
 
             TenantContext tenantContext = TenantContext.from(tenantId);
@@ -93,6 +114,14 @@ public class TenantContextFilter extends OncePerRequestFilter {
             TenantContextStore.clear();
             MDC.clear();
         }
+    }
+
+    private static boolean isPublicPath(String uri) {
+        if (uri == null) return false;
+        // /api/public/** — tenant registration and public clinic endpoints
+        // /api/admin/tenants — super-user tenant provisioning endpoint; operates across all
+        //   tenants at system level. Authentication is still enforced by AuthenticationFilter.
+        return uri.startsWith("/api/public/") || uri.startsWith("/api/admin/tenants");
     }
 
     private TraceContext resolveTraceContext(HttpServletRequest request) {

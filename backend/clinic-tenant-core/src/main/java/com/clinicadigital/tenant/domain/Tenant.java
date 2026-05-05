@@ -123,6 +123,18 @@ public class Tenant {
         this.status = "active";
     }
 
+    public void updateDetails(String slug, String legalName, String planTier) {
+        if (slug != null) {
+            this.slug = requireText(slug, "slug");
+        }
+        if (legalName != null) {
+            this.legalName = requireText(legalName, "legalName");
+        }
+        if (planTier != null) {
+            this.planTier = requireText(planTier, "planTier");
+        }
+    }
+
     @PrePersist
     void onCreate() {
         OffsetDateTime now = OffsetDateTime.now();

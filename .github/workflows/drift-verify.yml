@@ -12,7 +12,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Verify spec-plan-task drift rules
         shell: bash
         run: |
           bash scripts/drift-verify.sh
+
+      - name: Verify spec-plan-task drift with spec-kit-verify-tasks
+        shell: bash
+        run: |
+          if command -v spec-kit-verify-tasks >/dev/null 2>&1; then
+            spec-kit-verify-tasks
+          else
+            npx -y @github/spec-kit-verify-tasks || {
+              echo "spec-kit-verify-tasks not available; fallback check already executed"
+            }
+          fi

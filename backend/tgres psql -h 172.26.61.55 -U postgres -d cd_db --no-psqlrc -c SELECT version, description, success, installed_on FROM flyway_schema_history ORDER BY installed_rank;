@@ -1,0 +1,19 @@
+ version |               description                | type | success |        installed_on        
+---------+------------------------------------------+------+---------+----------------------------
+ 001     | create tenants table                     | SQL  | t       | 2026-04-09 05:50:34.323283
+ 002     | create iam tables                        | SQL  | t       | 2026-04-09 05:50:34.382449
+ 003     | create sessions table                    | SQL  | t       | 2026-04-09 05:50:34.432611
+ 004     | create audit events table                | SQL  | t       | 2026-04-09 05:50:34.448933
+ 005     | enable rls iam users                     | SQL  | t       | 2026-04-09 05:50:34.47703
+ 006     | enable rls iam sessions                  | SQL  | t       | 2026-04-09 05:50:34.489443
+ 007     | enable rls tenants                       | SQL  | t       | 2026-04-09 05:50:34.502921
+ 008     | create composite indices                 | SQL  | t       | 2026-04-09 05:50:34.516143
+ 009     | enable rls iam roles                     | SQL  | t       | 2026-04-09 05:50:34.537435
+ 010     | enable rls iam user roles                | SQL  | t       | 2026-04-09 05:50:34.548661
+ 011     | enable rls iam audit events              | SQL  | t       | 2026-04-09 05:50:34.562131
+ 200     | create institution iam foundation tables | SQL  | t       | 2026-04-21 05:22:46.364313
+ 201     | apply rls for institution iam tables     | SQL  | t       | 2026-04-21 05:22:46.539409
+ 202     | super user profile zero rls policy       | SQL  | t       | 2026-04-21 05:22:46.61446
+ 203     | align schema with spec 004 data model    | SQL  | t       | 2026-04-21 05:44:27.651431
+(15 rows)
+

@@ -6,27 +6,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "iam_users",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_iam_users_tenant_username", columnNames = {"tenant_id", "username"}),
-                @UniqueConstraint(name = "uk_iam_users_tenant_email", columnNames = {"tenant_id", "email"})
-        }
-)
+@Table(name = "iam_users")
 public class IamUser {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id")
     private UUID tenantId;
 
     @Column(name = "username", nullable = false)
@@ -38,8 +31,19 @@ public class IamUser {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "password_algo", nullable = false)
+    private String passwordAlgo = "bcrypt";
+
+    @Column(name = "account_active", nullable = false)
     private boolean active;
+
+    /** Profile: 0 = super-user, 10 = tenant admin, 20 = practitioner. Default 20. */
+    @Column(name = "profile", nullable = false)
+    private int profile = 20;
+
+    /** FK to practitioners(id); nullable for users without a practitioner record. */
+    @Column(name = "practitioner_id")
+    private UUID practitionerId;
 
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
@@ -62,6 +66,20 @@ public class IamUser {
         this.passwordHash = passwordHash;
         this.active = active;
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public IamUser(UUID id, UUID tenantId, String username, String email,
+                   String passwordHash, String passwordAlgo, boolean active,
+                   int profile, UUID practitionerId) {
+        this.id = id;
+        this.tenantId = tenantId;
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.passwordAlgo = passwordAlgo;
+        this.active = active;
+        this.profile = profile;
+        this.practitionerId = practitionerId;
     }
 
     @PrePersist
@@ -101,8 +119,24 @@ public class IamUser {
         return passwordHash;
     }
 
+    public String getPasswordAlgo() {
+        return passwordAlgo;
+    }
+
     public boolean isActive() {
         return active;
+    }
+
+    public int getProfile() {
+        return profile;
+    }
+
+    public UUID getPractitionerId() {
+        return practitionerId;
+    }
+
+    public void setPractitionerId(UUID practitionerId) {
+        this.practitionerId = practitionerId;
     }
 
     public Instant getLastLoginAt() {

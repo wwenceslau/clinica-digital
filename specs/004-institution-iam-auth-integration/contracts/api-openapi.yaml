@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Clinica Digital IAM API
-  version: 0.2.0
+  version: 0.3.0
   description: Contratos de IAM nativo in-app, registro institucional, sessao opaca, contexto do Shell e validacao RNDS para Organization, Location, Practitioner e PractitionerRole.
 servers:
   - url: http://localhost:8080
@@ -54,6 +54,54 @@ paths:
                 $ref: '#/components/schemas/CreateTenantAdminResponse'
         '409':
           description: Duplicidade de nome/CNES/email
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/tenants/{tenantId}:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: Atualiza dados cadastrais de um tenant existente
+      operationId: updateTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTenantRequest'
+      responses:
+        '200':
+          description: Tenant atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSummaryResponse'
+        '400':
+          description: Requisicao invalida
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '404':
+          description: Tenant nao encontrado
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+    delete:
+      summary: Remove tenant existente
+      operationId: deleteTenant
+      responses:
+        '204':
+          description: Tenant removido com sucesso
+        '404':
+          description: Tenant nao encontrado
           content:
             application/fhir+json:
               schema:
@@ -194,6 +242,129 @@ paths:
                 $ref: '#/components/schemas/CreateTenantUserResponse'
         '409':
           description: Duplicidade de email ou conflito de identificador
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/groups:
+    get:
+      summary: Lista os grupos de permissao do tenant autenticado
+      operationId: listGroups
+      responses:
+        '200':
+          description: Lista de grupos retornada
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupSummary'
+        '401':
+          description: Sessao invalida ou expirada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '403':
+          description: Permissao insuficiente para listar grupos
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+    post:
+      summary: Cria um grupo de permissao no tenant autenticado
+      operationId: createGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Grupo criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupSummary'
+        '400':
+          description: Payload invalido
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '409':
+          description: Nome de grupo duplicado no tenant
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/groups/{groupId}/permissions:
+    post:
+      summary: Adiciona uma permissao a um grupo
+      operationId: addPermissionToGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPermissionRequest'
+      responses:
+        '204':
+          description: Permissao adicionada
+        '400':
+          description: Payload invalido
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '403':
+          description: Permissao insuficiente
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '404':
+          description: Grupo nao encontrado
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/users/{userId}/permissions:
+    get:
+      summary: Lista permissoes efetivas de um usuario
+      operationId: getUserPermissions
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de permissoes efetivas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PermissionSummary'
+        '403':
+          description: Permissao insuficiente
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '404':
+          description: Usuario nao encontrado
           content:
             application/fhir+json:
               schema:
@@ -531,6 +702,31 @@ components:
           $ref: '#/components/schemas/OrganizationSummary'
         adminPractitioner:
           $ref: '#/components/schemas/PractitionerSummary'
+    TenantSummaryResponse:
+      type: object
+      required: [id, slug, legalName, status, planTier]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        legalName:
+          type: string
+        status:
+          type: string
+        planTier:
+          type: string
+    UpdateTenantRequest:
+      type: object
+      required: [slug, legalName, planTier]
+      properties:
+        slug:
+          type: string
+        legalName:
+          type: string
+        planTier:
+          type: string
     CreateTenantUserResponse:
       type: object
       required: [userId, practitionerId, practitionerRoleId, practitioner]
@@ -553,6 +749,57 @@ components:
         status:
           type: string
           enum: [revoked]
+    GroupSummary:
+      type: object
+      required: [id, name, tenantId, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nome unico do grupo dentro do tenant
+        tenantId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    CreateGroupRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+    AddPermissionRequest:
+      type: object
+      required: [permissionCode]
+      properties:
+        permissionCode:
+          type: string
+          description: Codigo da permissao conforme catalogo de permissoes do sistema
+    PermissionSummary:
+      type: object
+      required: [id, permissionCode, grantedVia]
+      properties:
+        id:
+          type: string
+          format: uuid
+        permissionCode:
+          type: string
+        description:
+          type: string
+        grantedVia:
+          type: string
+          enum: [group, direct]
+          description: Origem da concessao da permissao
     OperationOutcome:
       type: object
       required: [resourceType, issue]

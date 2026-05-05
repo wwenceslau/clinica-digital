@@ -39,10 +39,14 @@ public class QuotaBoundaryFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
+        // US4: /api/auth/** — no tenant quota check at login time (tenant unknown)
+        if (uri.startsWith("/api/auth/")) return true;
+        // /api/admin/tenants — system-level endpoint; no per-tenant quota applies
+        if (uri.startsWith("/api/admin/tenants")) return true;
         if ("POST".equalsIgnoreCase(request.getMethod()) && "/tenants/create".equals(uri)) {
             return true;
         }
-        return !(uri.startsWith("/api/") || uri.startsWith("/tenants"));
+        return !(uri.startsWith("/api/") || uri.startsWith("/tenants") || uri.startsWith("/auth"));
     }
 
     @Override

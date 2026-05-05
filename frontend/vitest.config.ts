@@ -5,6 +5,14 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    setupFiles: './src/test/setup.ts'
+    globals: true,
+    setupFiles: './src/test/setup.ts',
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
+    include: ['src/test/**/*.{test,spec}.{ts,tsx}'],
   }
 });

@@ -10,4 +10,7 @@ public interface IamSessionRepository {
     Optional<IamSession> findById(UUID sessionId);
 
     void revoke(UUID sessionId, UUID tenantId);
+
+    /** Updates the active_practitioner_role_id for the given session. */
+    void updateActivePractitionerRole(UUID sessionId, UUID practitionerRoleId);
 }

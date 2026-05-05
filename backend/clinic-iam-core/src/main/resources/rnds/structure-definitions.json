@@ -1,0 +1,8 @@
+{
+  "profiles": [
+    "http://www.saude.gov.br/fhir/r4/StructureDefinition/BREstabelecimentoSaude",
+    "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRUnidadeSaude",
+    "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProfissionalSaude",
+    "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRVinculoProfissionalEstabelecimento"
+  ]
+}

@@ -27,6 +27,20 @@ Naming convention oficial desta feature:
 - Estruturas FHIR compostas no DB: sufixo `_json`
 - Campos de aplicacao IAM (nao FHIR): sem prefixo `fhir_`
 - Chaves estrangeiras: `<entity>_id`
+- Termos legados proibidos: `fullName`, `is_active`
+
+## Naming Mapping DB -> API -> FHIR (Base)
+
+| DB (snake_case) | API (camelCase) | FHIR |
+|---|---|---|
+| organizations.cnes | organization.cnes | Organization.identifier(system=`https://saude.gov.br/sid/cnes`).value |
+| organizations.display_name | organization.displayName | Organization.name |
+| organizations.account_active | organization.accountActive | Organization.active |
+| locations.display_name | location.displayName | Location.name |
+| practitioners.display_name | practitioner.displayName | Practitioner.name[0].text |
+| practitioners.cpf_encrypted | practitioner.cpfEncrypted | Practitioner.identifier(system=`https://saude.gov.br/sid/cpf`).value |
+| iam_users.password_hash | iamUser.passwordHash | N/A (atributo interno IAM) |
+| iam_users.account_active | iamUser.accountActive | N/A (atributo interno IAM) |
 
 ## Entities
 
@@ -419,6 +433,73 @@ Constraints:
 - ACTIVE -> REVOKED (`revoked_at` por logout/admin)
 - ACTIVE -> INVALIDATED (`revocation_reason = tenant_disabled`)
 
+## Mapping Table - iam_sessions (DB -> API)
+
+| db_column | api_field | required | notes |
+|---|---|---|---|
+| id | sessionId | yes | opaque token digest; nunca exposto em plano |
+| iam_user_id | userId | yes | identidade do usuario autenticado |
+| tenant_id | tenantId | yes | contexto multi-tenant; null para profile 0 |
+| organization_id | organizationId | conditional | obrigatorio em sessao tenant-scoped |
+| active_practitioner_role_id | practitionerRoleId | conditional | resolve contexto do Shell |
+| expires_at | expiresAt | yes | sem silent refresh; sessao expira ao atingir |
+| revoked_at | revokedAt | no | null = sessao ainda ativa |
+| revocation_reason | revocationReason | no | `logout`, `admin`, `tenant_disabled` |
+| ip_address | N/A | N/A | nunca exposto pela API; auditoria interna |
+| user_agent | N/A | N/A | nunca exposto pela API; auditoria interna |
+
+## Mapping Table - iam_audit_events (DB -> API)
+
+| db_column | api_field | required | notes |
+|---|---|---|---|
+| id | eventId | yes | UUID do evento |
+| tenant_id | tenantId | conditional | null para eventos de bootstrap |
+| iam_user_id | userId | conditional | null para tentativas pre-autenticacao |
+| event_type | eventType | yes | `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `SESSION_REVOKED`, `PERMISSION_DENIED`, `TENANT_DISABLED` |
+| trace_id | traceId | yes | rastreabilidade distribuida; obrigatorio para todos os eventos |
+| ip_address | N/A | N/A | nunca exposto pela API |
+| details | details | no | JSON livre com contexto adicional do evento |
+| created_at | occurredAt | yes | timestamp imutavel do evento |
+| **Invariante** | — | — | tabela append-only; DELETE e UPDATE proibidos via trigger de banco |
+
+## Mapping Table - iam_groups (DB -> API)
+
+| db_column | api_field | required | notes |
+|---|---|---|---|
+| id | groupId | yes | UUID do grupo |
+| tenant_id | tenantId | yes | isolamento por tenant |
+| name | name | yes | unico dentro do tenant (`UNIQUE (tenant_id, name)`) |
+| description | description | no | descricao livre |
+| created_at | createdAt | yes | timestamp de criacao |
+| updated_at | updatedAt | yes | timestamp da ultima modificacao |
+| **Relacao** | permissions | no | lista de `PermissionSummary` derivada de `iam_group_permissions` |
+
+## Mapping Table - iam_permissions / iam_group_permissions (DB -> API)
+
+| db_column | api_field | required | notes |
+|---|---|---|---|
+| iam_permissions.id | permissionId | yes | UUID da permissao |
+| iam_permissions.permission_code | permissionCode | yes | ex: `ADMIN_GROUPS_READ`, `ADMIN_USERS_WRITE` |
+| iam_permissions.description | description | no | descricao legivel |
+| iam_group_permissions.group_id | groupId | yes | associacao grupo-permissao |
+| **Campo derivado** | grantedVia | yes | `group` ou `direct`; calculado pela consulta de permissoes efetivas |
+
+## Final Constraints Summary
+
+| Regra | Tabela(s) | Mecanismo de Enforcement |
+|---|---|---|
+| Isolamento multi-tenant (RLS) | Todas | `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` + policies por `tenant_id` |
+| Sessoes append-only | iam_sessions | Trigger `prevent_session_update` bloqueia UPDATE/DELETE de sessoes ativas |
+| Audit append-only | iam_audit_events | Trigger `prevent_audit_modification` bloqueia UPDATE/DELETE |
+| Rate limiting de login | iam_users | Coluna `failed_login_count` + `locked_until`; verificacao na camada de aplicacao |
+| CNES unico por tenant | organizations | `UNIQUE (tenant_id, cnes)` |
+| Email unico por tenant | iam_users | `UNIQUE (tenant_id, lower(email))` |
+| Nome de grupo unico | iam_groups | `UNIQUE (tenant_id, lower(name))` |
+| Permissao unica por grupo | iam_group_permissions | `UNIQUE (group_id, permission_id)` |
+| CPF criptografado | practitioners | `cpf_encrypted BYTEA NOT NULL`; chave de criptografia versionada |
+| Profile RNDS validado | organizations, practitioners, locations, practitioner_roles | Validacao na borda de entrada da API (antes de qualquer persistencia) |
+| Sessao requer active_practitioner_role | iam_sessions | Verificacao na emissao de sessao; `active_practitioner_role_id NOT NULL` para tenant-scoped |
+
 ## Indexing Recommendations
 - idx_orgs_cnes on cnes
 - idx_orgs_display_name_lower on lower(display_name)
@@ -429,3 +510,5 @@ Constraints:
 - idx_sessions_tenant_active on (tenant_id, active, expires_at)
 - idx_audit_events_tenant_created on (tenant_id, created_at)
 - idx_auth_challenges_expires on expires_at
+- idx_groups_tenant_name on (tenant_id, lower(name))
+- idx_group_permissions_group on group_id

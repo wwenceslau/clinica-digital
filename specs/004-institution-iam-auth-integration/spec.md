@@ -27,6 +27,7 @@ Como super-user, desejo criar uma nova organização (tenant) e seu usuário adm
 **Acceptance Scenarios:**
 1. **Given** estou autenticado como super-user, **When** cadastro nova organização e admin, **Then** ambos são criados, sem duplicidade de nome/CNES.
 2. **Given** nome ou CNES já existem, **When** tento cadastrar, **Then** recebo erro amigável (OperationOutcome).
+3. **Given** o tenant já existe, **When** atualizo slug/nome/plano ou removo o tenant via painel administrativo, **Then** a alteração é persistida no backend e refletida na lista do CRUD.
 
 ---
 
@@ -121,16 +122,18 @@ Como gestor institucional, desejo que o profissional autenticado atue em uma uni
 - **FR-003**: O super-user (profile 0) DEVE poder criar organizações (tenants) e usuários administradores (profile 10). Não pode haver organizações com o mesmo nome.
 	- A criação de Organization DEVE exigir CNES válido e único.
 	- O registro de Organization DEVE criar, na mesma transação lógica, o primeiro usuário administrador vinculado (profile 10).
+	- O painel administrativo DEVE suportar atualização cadastral de tenant (slug, legalName, planTier), atualização dos dados do admin inicial vinculado (displayName, email, CPF criptografado e senha com hash forte) e exclusão de tenant existente via endpoints autenticados.
 - **FR-004**: O sistema DEVE permitir login de administradores (profile 10) e usuários (profile 20) informando email e senha. Após autenticação, o sistema DEVE filtrar todas as organizações às quais o usuário tem acesso e:
 	- Se houver múltiplas organizações, DEVE exibir uma tela de seleção para o usuário escolher qual organização acessar.
 	- Se houver apenas uma organização, DEVE direcionar automaticamente para o dashboard dessa organização, sem necessidade de seleção.
 	- O campo de login NÃO deve mais aceitar nome ou CNES diretamente, apenas email.
 - **FR-005**: O sistema DEVE permitir granularidade de permissões via profiles: 0 (super-user), 10 (admin), 20 (user), reservando o range para futuros perfis.
 - **FR-006**: O sistema DEVE permitir que administradores (profile 10) criem grupos/permissões customizadas e atribuam usuários (profile 20) a esses grupos, exibindo todas as permissões disponíveis para cada página/funcionalidade.
-- **FR-007**: O contexto do tenant_id DEVE ser capturado após a seleção da organização e persistido em sessão stateless (token opaco) para profiles 10 e 20. A validação do tenant_id deve ser feita via claims do token em todas as rotas protegidas (ver spec/002 e spec/003).
+- **FR-007**: O contexto do tenant_id DEVE ser capturado após a seleção da organização e persistido em sessão opaca com armazenamento server-side (tabela `iam_sessions`) para profiles 10 e 20. A validação do tenant_id deve ser feita via consulta à sessão (token opaco como chave lookup) em todas as rotas protegidas (ver spec/002 e spec/003).
 	- O token opaco DEVE ser persistido prioritariamente em cookie seguro (`Secure`, `HttpOnly`, `SameSite=Lax`) no ambiente web.
 	- Em ambientes de desenvolvimento sem cookie seguro disponível, a persistência DEVE ocorrer apenas em memória de sessão (sem `localStorage`).
-	- O frontend DEVE encaminhar o contexto de tenant para o middleware de contexto multi-tenant antes de chamadas protegidas.
+	- O backend DEVE validar token opaco consultando `iam_sessions.id = token AND iam_sessions.active = true AND iam_sessions.expires_at > now()` antes de permitir acesso.
+	- O frontend DEVE encaminhar o token opaco (via cookie automático ou header Authorization) para o middleware de contexto multi-tenant antes de chamadas protegidas.
 - **FR-008**: Após login, o practitioner logado e a location ativa DEVEM ser exibidos no header do Shell.
 - **FR-009**: Erros de autenticação/validação DEVEM ser retornados como FHIR OperationOutcome e renderizados como alertas visuais (Toast/Alert MUI 7).
 	- O payload DEVE conter `issue[].severity`, `issue[].code`, `issue[].details.text` e, quando aplicável, `issue[].diagnostics`.

@@ -34,11 +34,22 @@ class IamSessionRepositoryJpa implements IIamSessionRepository {
     public void revoke(UUID sessionId, UUID tenantId) {
         entityManager.createQuery(
                         "UPDATE IamSession s " +
-                                "SET s.revokedAt = :revokedAt " +
-                                "WHERE s.id = :sessionId AND s.tenantId = :tenantId AND s.revokedAt IS NULL")
+                                "SET s.revokedAt = :revokedAt, s.active = false " +
+                                "WHERE s.id = :sessionId AND (s.tenantId = :tenantId OR s.tenantId IS NULL) AND s.revokedAt IS NULL")
                 .setParameter("revokedAt", Instant.now())
                 .setParameter("sessionId", sessionId)
                 .setParameter("tenantId", tenantId)
+                .executeUpdate();
+    }
+
+    @Override
+    public void updateActivePractitionerRole(UUID sessionId, UUID practitionerRoleId) {
+        entityManager.createQuery(
+                        "UPDATE IamSession s " +
+                                "SET s.activePractitionerRoleId = :practitionerRoleId " +
+                                "WHERE s.id = :sessionId")
+                .setParameter("practitionerRoleId", practitionerRoleId)
+                .setParameter("sessionId", sessionId)
                 .executeUpdate();
     }
 }

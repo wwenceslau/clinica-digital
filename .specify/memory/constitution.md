@@ -440,6 +440,38 @@ de IAM externos criam vetores de dependência não controlados, pontos de falha
 fora da superfície de auditoria da aplicação, e riscos de transferência de dados
 para jurisdições não conformes com a LGPD.
 
+### XXIII. Task Definition of Done Mandate (NON-NEGOTIABLE)
+
+Toda task de implementação DEVE declarar um critério de Done (DoD) explícito e
+verificável por comando antes que sua implementação seja iniciada ou aprovada.
+
+- **Formato obrigatório por task**: Cada task DEVE conter um campo `**DoD**` com
+  pelo menos um comando verificável (ex.: `tsc --noEmit`, `npx vitest run <test>`,
+  `grep -rn "import.*<Artefato>" src/`, `npx playwright test <spec>`) que comprove
+  que o artefato foi criado E integrado no contexto em que deve funcionar.
+- **"Arquivo criado" não é Done**: A existência de um arquivo no repositório não
+  constitui task concluída. A task só é Done quando o artefato é consumido,
+  testado e integrado no fluxo de execução real.
+- **Dependência explícita obrigatória**: Toda task DEVE declarar `**Depends on**`
+  com as IDs das tasks que devem estar completas antes que esta possa começar.
+  Tasks sem `**Depends on**` são permitidas somente se genuinamente independentes.
+- **Tasks sem DoD verificável DEVEM ser bloqueadas**: Qualquer task criada sem
+  critério de Done verificável por comando é inválida e DEVE ser rejeitada antes
+  de entrar em implementação.
+- **Gate de encerramento**: Antes de marcar qualquer task como [X], o agente ou
+  desenvolvedor DEVE executar todos os comandos do DoD e confirmar saída 0.
+  A ausência de evidência de execução equivale a task não concluída.
+- **Aplicação retroativa**: Tasks existentes sem DoD DEVEM ser atualizadas com
+  critério verificável antes de sua implementação ser iniciada. Tasks marcadas
+  [X] sem evidência de integração DEVEM ser reabertas e re-validadas.
+
+**Rationale**: A análise retrospectiva do Feature 003 identificou que 4 tasks
+foram marcadas como concluídas ao criar o arquivo, sem integração real.
+Esse padrão gera falsa sensação de progresso, oculta gaps de integração e
+produz builds que compilam mas não funcionam. O mandato de DoD verificável
+torna o critério de conclusão inequívoco e auditável.
+
+
 ## Technology Stack
 
 The following choices are canonical. Deviations MUST be ratified as a constitutional
@@ -517,6 +549,10 @@ organisms, templates) to prevent duplicated interface logic and styling.
           with compatibility and risk analysis before plan approval.
         22. Incident/QA corrective changes update `spec.md` Edge Cases before code fix
           tasks are marked ready.
+        24. Every task in tasks.md MUST declare a machine-verifiable Definition of Done
+          (DoD) and explicit task dependencies before implementation begins. Tasks without
+          DoD or dependencies are invalid and MUST be corrected before the plan is approved
+          (Principle XXIII).
         23. Any plan, module, or task proposing the use of an external IdP, managed
           authentication service, or third-party auth library is automatically
           rejected as a constitutional violation of Principle XXII.
@@ -565,4 +601,4 @@ This constitution supersedes all other development guidelines within this projec
   stabilized architecture governance. Changes after this baseline SHOULD default
   to PATCH unless new mandatory governance is introduced.
 
-**Version**: 1.6.0 | **Ratified**: 2026-04-05 | **Last Amended**: 2026-04-05
+**Version**: 1.7.0 | **Ratified**: 2026-04-05 | **Last Amended**: 2026-04-30

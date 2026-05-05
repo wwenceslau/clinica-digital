@@ -22,14 +22,20 @@ public class IamSession {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id")
     private UUID tenantId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "iam_user_id", nullable = false)
     private UUID userId;
 
     @Column(name = "issued_at", nullable = false, updatable = false)
     private Instant issuedAt;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
@@ -45,6 +51,9 @@ public class IamSession {
 
     @Column(name = "trace_id")
     private String traceId;
+
+    @Column(name = "active_practitioner_role_id")
+    private UUID activePractitionerRoleId;
 
     protected IamSession() {
         // JPA constructor
@@ -98,6 +107,17 @@ public class IamSession {
         if (issuedAt == null) {
             issuedAt = now;
         }
+        if (createdAt == null) {
+            createdAt = now;
+        }
+    }
+
+    public boolean activeFlag() {
+        return active;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 
     public UUID id() {
@@ -134,6 +154,14 @@ public class IamSession {
 
     public String traceId() {
         return traceId;
+    }
+
+    public UUID activePractitionerRoleId() {
+        return activePractitionerRoleId;
+    }
+
+    public void setActivePractitionerRoleId(UUID activePractitionerRoleId) {
+        this.activePractitionerRoleId = activePractitionerRoleId;
     }
 
     @Override

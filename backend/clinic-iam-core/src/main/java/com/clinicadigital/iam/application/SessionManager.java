@@ -35,7 +35,7 @@ public class SessionManager {
      */
     public IamSession createSession(UUID userId, UUID tenantId, String traceId) {
         requireNonNull(userId, "userId");
-        requireNonNull(tenantId, "tenantId");
+        // tenantId is nullable: super-user (profile 0) sessions are not tenant-scoped
 
         Instant now = Instant.now();
         IamSession session = new IamSession(
@@ -57,9 +57,14 @@ public class SessionManager {
      */
     public boolean validateSession(UUID sessionId, UUID tenantId) {
         requireNonNull(sessionId, "sessionId");
-        requireNonNull(tenantId, "tenantId");
+        // tenantId is nullable: super-user sessions have no tenant scope
         return repository.findById(sessionId)
-                .map(session -> tenantId.equals(session.tenantId()) && session.isActive())
+                .map(session -> {
+                    boolean tenantMatch = tenantId == null
+                            ? session.tenantId() == null
+                            : tenantId.equals(session.tenantId());
+                    return tenantMatch && session.isActive();
+                })
                 .orElse(false);
     }
 
@@ -71,7 +76,7 @@ public class SessionManager {
      */
     public void revokeSession(UUID sessionId, UUID tenantId) {
         requireNonNull(sessionId, "sessionId");
-        requireNonNull(tenantId, "tenantId");
+        // tenantId is nullable: super-user sessions have no tenant scope
         repository.revoke(sessionId, tenantId);
     }
 

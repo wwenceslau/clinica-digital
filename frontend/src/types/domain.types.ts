@@ -18,6 +18,7 @@ export interface SidebarResourceItem {
 export interface SidebarDomainGroup {
   domain_id: string;
   domain_label_key: string;
+  icon_id?: string;
   description?: string;
   resources: SidebarResourceItem[];
   visible?: boolean;

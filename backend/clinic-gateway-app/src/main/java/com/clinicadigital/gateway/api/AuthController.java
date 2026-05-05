@@ -3,10 +3,14 @@ package com.clinicadigital.gateway.api;
 import com.clinicadigital.gateway.exception.AuthSessionException;
 import com.clinicadigital.gateway.exception.InvalidTenantContextException;
 import com.clinicadigital.gateway.filters.AuthenticationFilter;
+import com.clinicadigital.gateway.security.LoginLockoutService;
+import com.clinicadigital.gateway.security.SanitizationValidationGate;
+import com.clinicadigital.gateway.security.SessionCookieService;
 import com.clinicadigital.iam.application.AuthenticationService;
 import com.clinicadigital.shared.api.TenantContext;
 import com.clinicadigital.shared.api.TenantContextStore;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -18,39 +22,61 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/auth")
 @Validated
 public class AuthController {
 
-    private final AuthenticationService authenticationService;
+    private static final Duration SESSION_COOKIE_TTL = Duration.ofMinutes(30);
 
-    public AuthController(AuthenticationService authenticationService) {
+    private final AuthenticationService authenticationService;
+    private final SanitizationValidationGate sanitizationValidationGate;
+    private final LoginLockoutService loginLockoutService;
+    private final SessionCookieService sessionCookieService;
+
+    public AuthController(AuthenticationService authenticationService,
+                          SanitizationValidationGate sanitizationValidationGate,
+                          LoginLockoutService loginLockoutService,
+                          SessionCookieService sessionCookieService) {
         this.authenticationService = authenticationService;
+        this.sanitizationValidationGate = sanitizationValidationGate;
+        this.loginLockoutService = loginLockoutService;
+        this.sessionCookieService = sessionCookieService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request,
-                                               HttpServletRequest httpRequest) {
+                               HttpServletRequest httpRequest,
+                               HttpServletResponse httpResponse) {
         TenantContext context = requiredTenantContext();
-        if (request == null || request.email() == null || request.email().isBlank()
-                || request.password() == null || request.password().isBlank()) {
+        if (request == null) {
             throw new AuthSessionException("email and password are required");
         }
+
+        String email = sanitizationValidationGate.requireEmail(request.email(), "email");
+        String password = sanitizationValidationGate.requirePassword(request.password(), "password");
+
         UUID effectiveTenantId = request.tenantId() == null ? context.tenantId() : request.tenantId();
         if (request.tenantId() != null && !context.tenantId().equals(request.tenantId())) {
             throw new InvalidTenantContextException("tenant context invalid: body tenant does not match context tenant");
         }
 
+        String lockoutKey = effectiveTenantId + ":" + email;
+        loginLockoutService.assertNotLocked(lockoutKey);
+
         try {
             AuthenticationService.LoginResult result = authenticationService.login(
                     effectiveTenantId,
-                    request.email(),
-                    request.password(),
+                email,
+                password,
                     currentTraceId(),
                     clientIp(httpRequest),
                     httpRequest.getHeader("User-Agent"));
+
+            loginLockoutService.registerSuccess(lockoutKey);
+            sessionCookieService.writeSessionCookie(httpResponse, result.sessionId(), SESSION_COOKIE_TTL);
 
             return ResponseEntity.ok(new LoginResponse(
                     result.sessionId(),
@@ -61,16 +87,19 @@ public class AuthController {
                     "auth.login",
                     "success"));
         } catch (IllegalArgumentException ex) {
+            loginLockoutService.registerFailure(lockoutKey);
             throw new AuthSessionException(ex.getMessage());
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<LogoutResponse> logout(HttpServletRequest request) {
+    public ResponseEntity<LogoutResponse> logout(HttpServletRequest request,
+                                                 HttpServletResponse response) {
         TenantContext context = requiredTenantContext();
         UUID sessionId = requiredRequestSessionId(request);
 
         authenticationService.logout(sessionId, context.tenantId(), null, currentTraceId());
+        sessionCookieService.clearSessionCookie(response);
         return ResponseEntity.ok(new LogoutResponse(
                 sessionId,
                 true,

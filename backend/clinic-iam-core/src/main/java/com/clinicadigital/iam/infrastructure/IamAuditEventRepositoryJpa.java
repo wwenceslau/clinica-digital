@@ -17,4 +17,14 @@ class IamAuditEventRepositoryJpa implements IamAuditEventRepository {
         entityManager.persist(event);
         return event;
     }
+
+    @Override
+    public java.util.List<IamAuditEvent> findByTenantIdOrderByCreatedAtDesc(java.util.UUID tenantId, int limit) {
+        return entityManager.createQuery(
+                        "SELECT e FROM IamAuditEvent e WHERE e.tenantId = :tenantId ORDER BY e.createdAt DESC",
+                        IamAuditEvent.class)
+                .setParameter("tenantId", tenantId)
+                .setMaxResults(limit)
+                .getResultList();
+    }
 }

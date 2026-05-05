@@ -35,7 +35,15 @@ class IAMCorePublicAPITest {
             "com.clinicadigital.iam.domain.IamSessionRepository",
             "com.clinicadigital.iam.domain.IamUser",
             "com.clinicadigital.iam.domain.IamUserRepository",
-            "com.clinicadigital.iam.domain.IIamSessionRepository"
+            "com.clinicadigital.iam.domain.IIamSessionRepository",
+            // Phase 2 (Foundation) additions — T008, T010, T013, T014, T017
+            "com.clinicadigital.iam.application.EncryptionKeyProvider",
+            "com.clinicadigital.iam.application.ExternalSecretEncryptionKeyProvider",
+            "com.clinicadigital.iam.application.IamOperationOutcomeFactory",
+            "com.clinicadigital.iam.application.IdentifierSystemResolver",
+            "com.clinicadigital.iam.application.PiiCryptoService",
+            "com.clinicadigital.iam.application.RbacPermissionMap",
+            "com.clinicadigital.iam.application.RndsStructureDefinitionRegistry"
         );
 
     private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w.]+)\\s*;", Pattern.MULTILINE);

@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://172.26.61.55:5432/cd_db?schema=public
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  shell:
+    interactive:
+      enabled: false
+
+iam:
+  session:
+    cookie:
+      name: cd_session
+      secure: false
+  pii:
+    key:
+      active-version: v1
+      v1: cd_db-key
+      v2:
+      v3:
+
+logging:
+  level:
+    root: INFO
+    com.clinicadigital: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

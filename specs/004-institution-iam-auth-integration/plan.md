@@ -18,6 +18,7 @@
 - Persistir sessao stateless com token opaco em cookie seguro e claim de tenant para profiles 10/20, sem silent refresh nesta feature
 - Garantir segregacao por tenant via PostgreSQL RLS e validacao de claim em rotas protegidas
 - Expor fluxos principais por API e CLI com retornos JSON e erros FHIR OperationOutcome
+- Completar ciclo de vida administrativo de tenant com listagem, atualização e exclusão via `/api/admin/tenants` e `/api/admin/tenants/{tenantId}`
 - Expor fluxo publico de registro de clinica com validacao de CNES e criacao do primeiro admin na mesma transacao logica
 - Integrar contexto de autenticacao/tenant no frontend via Context Providers, `App.tsx` e `MainTemplate`, aderente ao contrato do Shell da feature 003
 - Implementar trilha de auditoria para bootstrap, login, criacao de tenant e eventos sensiveis
@@ -103,7 +104,15 @@ As pendencias remanescentes da auditoria em [checklists/integration-readiness.md
 | XXI | **Feedback Loop Gate**: Incident/QA fix plans update `spec.md` Edge Cases before implementation tasks proceed. | ✅ Plan | Processo de retroalimentacao definido em secao dedicada. |
 | XXII | **Native Security (BLOCKING)**: Authentication, IAM, credential storage, and session control are implemented entirely in-app. Any use of external IdPs or managed auth services (Keycloak, Auth0, Okta, Cognito, Azure AD B2C, etc.) renders this plan **constitutionally invalid** and MUST be rejected without exception (Principle XXII). | ✅ PASS | IAM integralmente in-app, sem provedor externo. |
 
-**Compliance Review Required**: [ ] YES — [x] NO
+**Compliance Review Required**: [x] YES — [ ] NO
+
+**Compliance Evidence**:
+- FHIR R4 Organization.meta.profile: `http://www.saude.gov.br/fhir/r4/StructureDefinition/BREstabelecimentoSaude` (fixed URI, RNDS-versioned)
+- FHIR R4 Practitioner.meta.profile: `http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProfissionalSaude` (fixed URI, RNDS-versioned)
+- FHIR R4 Location.meta.profile: `http://www.saude.gov.br/fhir/r4/StructureDefinition/BRUnidadeSaude` (fixed URI, RNDS-versioned)
+- FHIR R4 PractitionerRole.meta.profile: `http://www.saude.gov.br/fhir/r4/StructureDefinition/BRVinculoProfissionalEstabelecimento` (fixed URI, RNDS-versioned)
+- Validação RNDS realizada contra StructureDefinitions carregadas localmente conforme FR-020
+- Mudança de versão/URI RNDS requer revisão controlada de spec.md
 
 ## Requirements Traceability Matrix
 
@@ -139,6 +148,7 @@ As pendencias remanescentes da auditoria em [checklists/integration-readiness.md
 | D-028 | FR-025 | Quotas e rate limiting por `tenant_id` para API/CLI em `Planning Decisions from Integration Audit` e tasks fundamentais |
 | D-029 | SC-001, SC-004 | Protocolo de evidencia manual e reproducao em ambientes de homologacao em [spec.md](spec.md) e [quickstart.md](quickstart.md) |
 | D-030 | FR-011 | Origem de chave em secret manager e rotacao de chave para PII criptografada em tasks de seguranca |
+| D-031 | FR-003, FR-009 | Ciclo de vida de tenant no admin com `PUT/DELETE /api/admin/tenants/{tenantId}` + contrato OpenAPI e testes de integração |
 
 ## Research Validation (MANDATORY for new technologies/integrations)
 
@@ -297,7 +307,7 @@ frontend/
 ### Planning Phase 2: Implementation Planning
 - [x] [tasks.md](tasks.md) gerado com ordem de dependencia
 - [x] Validacao de rastreabilidade FR/D-xxx consolidada
-- [ ] Iniciar implementacao por lotes (backend, frontend, testes, hardening)
+- [x] Implementacao em andamento — Phases 1–6 parcialmente executadas (ver [checklists/checklist.md](checklists/checklist.md))
 - [ ] Atualizar checklist unico ao fim de cada fase: [checklists/checklist.md](checklists/checklist.md)
 
 ## Execution Phase Map
@@ -321,6 +331,7 @@ As fases abaixo sao as fases operacionais canonicas de execucao e DEVEM permanec
 
 ### Phase 6 - US4 (Login Multi-Perfil)
 - Login por email/senha com selecao automatica ou manual de organizacao
+- **Status (2026-04-23)**: Backend 90% concluído — `AuthenticationService.loginByEmail`, `MultiOrgAuthController` (/api/auth/login + /api/auth/select-organization), `AuthChallengeService`, `SessionManager`, `SessionCookieService`, `LoginLockoutService` implementados e contract/integration tests passando (T048–T051, T053–T057, T059). Pendente: T052 (e2e multi-tenant) e T058 (componentes React `LoginForm`, `AuthTemplate`, `OrganizationSelectionPage` — ausentes em `src/components/organisms/`). Ver [checklists/phase6-login.md](checklists/phase6-login.md) para gaps de requisitos.
 
 ### Phase 7 - US7 (Feedback Visual e Erros)
 - Tratamento padronizado de OperationOutcome no backend e no Shell

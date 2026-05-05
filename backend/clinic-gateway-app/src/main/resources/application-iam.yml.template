@@ -1,0 +1,12 @@
+iam:
+  session:
+    cookie:
+      name: cd_session
+      secure: true
+  pii:
+    key:
+      active-version: v1
+      # Keys must be injected from secret manager / KMS in real environments.
+      v1: ${IAM_PII_KEY_V1:change-me-in-secret-manager}
+      v2: ${IAM_PII_KEY_V2:}
+      v3: ${IAM_PII_KEY_V3:}
