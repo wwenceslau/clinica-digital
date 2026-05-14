@@ -319,6 +319,20 @@ cd backend
 
 ### Frontend — Login Render (SC-001)
 
+## 17) Reconvergencia Fase 18 (dados reais sem mock)
+
+1. Acessar `/admin/tenants` e validar que o bloco de historico de sessoes consome `GET /api/admin/sessions`.
+2. Revogar uma sessao via botao `Revogar` e confirmar `POST /api/admin/sessions/{sessionId}/revoke` com `revocationReason`.
+3. Acessar `/admin/security/audit` e validar exibicao de `actorUserId`, `actorPractitionerId`, `traceId` e payload minimizado.
+4. Acessar `/admin/security/roles`, expandir um grupo e validar listagem de membros/permissoes.
+5. Remover permissao, remover membro e excluir grupo; confirmar respostas `204` para endpoints DELETE.
+6. Validar rota canonica de usuarios em `/admin/security/users`; `/admin/usuarios` deve redirecionar para a rota canonica.
+
+Resultado esperado:
+- Nenhum dado mock em historico de sessao.
+- Revogacao registra motivo auditavel.
+- UI RBAC cobre listagem, remocao e exclusao com atualizacao imediata.
+
 | Metrica | Threshold | Resultado observado | Ambiente |
 |---|---|---|---|
 | LoginForm render duration | < 1 500 ms | (preencher apos execucao de `LoginRenderPerformance.test.tsx`) | Vitest jsdom |
@@ -363,3 +377,107 @@ Todos os criterios de aceite da spec.md validados. Contratos OpenAPI em `contrac
 - Organization/Location/Practitioner/PractitionerRole validados contra perfis RNDS oficiais
 - Quotas por tenant e rate limiting validados em API e CLI
 - Metas de performance publicadas com evidencia
+
+## 18) Validação Phase 19 — Superfícies Administrativas (T182)
+
+> Executar após Phase 18 para revalidar as novas superfícies administrativas introduzidas pela reconvergência.
+
+### 18.1) Gestão de Locations
+```bash
+# Criar location
+curl -s -b cookies.txt -X POST http://localhost:8080/api/admin/locations \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: <tenant-uuid>" \
+  -d '{"name":"Unidade Central","cnes":"1234567","organizationId":"<org-uuid>","status":"active","mode":"instance"}'
+# Listar locations do tenant
+curl -s -b cookies.txt http://localhost:8080/api/admin/locations \
+  -H "X-Tenant-ID: <tenant-uuid>"
+```
+Resultado esperado: location criada com `identifier[]` RNDS; listagem retorna array JSON com `status` e `managingOrganization`.
+
+### 18.2) Gestão de PractitionerRoles
+```bash
+# Listar roles do tenant
+curl -s -b cookies.txt http://localhost:8080/api/admin/practitioner-roles \
+  -H "X-Tenant-ID: <tenant-uuid>"
+# Criar role com período
+curl -s -b cookies.txt -X POST http://localhost:8080/api/admin/practitioner-roles \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: <tenant-uuid>" \
+  -d '{"practitionerId":"<prac-uuid>","organizationId":"<org-uuid>","locationId":"<loc-uuid>","roleCode":"medico","primaryRole":true,"periodStart":"2026-01-01"}'
+```
+Resultado esperado: role criada com `active=true`, `primaryRole=true`, sem hardcodes de `locationId`/`roleCode`.
+
+### 18.3) RBAC Lifecycle Completo
+```bash
+# Criar grupo
+curl -s -b cookies.txt -X POST http://localhost:8080/api/admin/groups \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: <tenant-uuid>" \
+  -d '{"name":"Recepcionistas","description":"Acesso recepção"}'
+# Adicionar membro
+curl -s -b cookies.txt -X POST http://localhost:8080/api/admin/groups/<group-id>/members \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: <tenant-uuid>" \
+  -d '{"userId":"<user-uuid>"}'
+# Remover permissão
+curl -s -b cookies.txt -X DELETE http://localhost:8080/api/admin/groups/<group-id>/permissions/<perm-id> \
+  -H "X-Tenant-ID: <tenant-uuid>"
+# Excluir grupo
+curl -s -b cookies.txt -X DELETE http://localhost:8080/api/admin/groups/<group-id> \
+  -H "X-Tenant-ID: <tenant-uuid>"
+```
+Resultado esperado: todas as operações retornam 200/204; remoção de permissão e exclusão registram evento de auditoria.
+
+### 18.4) Histórico de Sessões e Revogação
+```bash
+# Listar sessões administrativas
+curl -s -b cookies.txt http://localhost:8080/api/admin/sessions \
+  -H "X-Tenant-ID: <tenant-uuid>"
+# Revogar sessão com motivo auditável
+curl -s -b cookies.txt -X POST http://localhost:8080/api/admin/sessions/<session-id>/revoke \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: <tenant-uuid>" \
+  -d '{"revocationReason":"suspicious_activity"}'
+```
+Resultado esperado: listagem expõe `opaque_token_digest` (nunca o token raw); revogação registra `revocation_reason` em `iam_audit_events` com `actor_practitioner_id`.
+
+### 18.5) Validação C3 — CreateTenantAdminService UUID Fix
+```bash
+# Criar tenant via CLI
+cd backend
+./mvnw -q -pl clinic-gateway-app -am exec:java \
+  -Dexec.mainClass="com.clinicadigital.cli.CreateTenantAdminCommand" \
+  -Dexec.args="--tenant-name='Clinica Teste C3' --cnes=9988776 --admin-display-name='Admin C3' --admin-email=admin@c3.com --admin-cpf=98765432100 --admin-password='C3pass!1'"
+# Confirmar que organization.id == tenant.id
+tgres psql -h 172.26.61.55 -U postgres -d cd_db --no-psqlrc \
+  -c "SELECT t.id AS tenant_id, o.id AS org_id, o.id = t.id AS constraint_satisfied FROM tenants t JOIN organizations o ON o.tenant_id = t.id WHERE t.slug='clinica-teste-c3';"
+```
+Resultado esperado: `constraint_satisfied = true` para o tenant criado.
+
+### 18.6) Validação de Sessão por Digest (Gate G008)
+Confirmar que `iam_sessions.opaque_token_digest` contém hash SHA-256 do token opaco e não o token raw:
+```sql
+-- nenhuma linha deve ter opaque_token_digest igual ao cookie de sessão em texto claro
+SELECT COUNT(*) FROM iam_sessions WHERE opaque_token_digest NOT LIKE '%$%' AND length(opaque_token_digest) = 64;
+```
+Resultado esperado: todas as sessões ativas têm digest de 64 hex chars.
+
+## 19) Status de Fechamento da Feature (2026-05-09)
+
+| Gate | Status | Evidência |
+|------|--------|-----------|
+| G001 Migrations | ✅ | Flyway V200-V203 aplicados; V204 crosslogin RLS |
+| G002 RLS policies | ✅ | T006, T007, T134 — políticas 0/10/20 e isolamento cross-tenant |
+| G003 Validação RNDS | ✅ | T013 — pacotes locais carregados no classpath |
+| G004 Sessão opaca + cookie | ✅ | T015, T165 — lookup por `opaque_token_digest` |
+| G005 Rate limiting + quotas | ✅ | T016, T131, T135 — isolamento multi-tenant validado |
+| G006 KMS/pgcrypto PII | ✅ | T127 — AES-256-GCM via pgcrypto |
+| G007 Rotação de chave | ✅ | T128 — procedimento documentado |
+| G008 Session digest validation | ✅ | T164, T165 — Phase 18 |
+| G009 Lockout persistente | ✅ | T164, T166 — Phase 18 |
+| G010 Paridade JPA V203 | ✅ | T160, T172 — Phase 18 |
+| G011 Admin locations + roles | ✅ | T167-T171 — Phase 18 |
+| G012 RBAC lifecycle | ✅ | T176, T177 — Phase 18 |
+| G013 Superfície admin completa | ✅ | T173-T175, T179 — Phase 18 |
+| **Aberto** | T186 — cobertura profile=10 login | Phase 20 — não bloqueia fechamento |

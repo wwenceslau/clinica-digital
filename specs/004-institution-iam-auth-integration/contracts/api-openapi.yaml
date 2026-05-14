@@ -246,6 +246,220 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/locations:
+    get:
+      summary: Lista locations administrativas do tenant autenticado
+      operationId: listAdminLocations
+      responses:
+        '200':
+          description: Lista de locations retornada
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminLocationResponse'
+        '401':
+          description: Sessao invalida ou expirada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '403':
+          description: Somente admin (profile 10)
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+    post:
+      summary: Cria location administrativa no tenant autenticado
+      operationId: createAdminLocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdminLocationRequest'
+      responses:
+        '201':
+          description: Location criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLocationResponse'
+        '400':
+          description: Payload invalido
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '404':
+          description: Organizacao nao encontrada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/locations/{locationId}:
+    put:
+      summary: Atualiza location administrativa no tenant autenticado
+      operationId: updateAdminLocation
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminLocationRequest'
+      responses:
+        '200':
+          description: Location atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLocationResponse'
+        '404':
+          description: Location nao encontrada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/locations/{locationId}/deactivate:
+    post:
+      summary: Desativa location administrativa no tenant autenticado
+      operationId: deactivateAdminLocation
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Location desativada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLocationResponse'
+        '404':
+          description: Location nao encontrada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/practitioner-roles:
+    get:
+      summary: Lista lotacoes administrativas do tenant autenticado
+      operationId: listAdminPractitionerRoles
+      responses:
+        '200':
+          description: Lista de lotacoes retornada
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminPractitionerRoleResponse'
+        '401':
+          description: Sessao invalida ou expirada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '403':
+          description: Somente admin (profile 10)
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+    post:
+      summary: Cria lotacao administrativa no tenant autenticado
+      operationId: createAdminPractitionerRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdminPractitionerRoleRequest'
+      responses:
+        '201':
+          description: Lotacao criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPractitionerRoleResponse'
+        '400':
+          description: Payload invalido
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '404':
+          description: Dependencia nao encontrada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/practitioner-roles/{roleId}:
+    put:
+      summary: Atualiza lotacao administrativa no tenant autenticado
+      operationId: updateAdminPractitionerRole
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminPractitionerRoleRequest'
+      responses:
+        '200':
+          description: Lotacao atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPractitionerRoleResponse'
+        '404':
+          description: Lotacao nao encontrada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/practitioner-roles/{roleId}/deactivate:
+    post:
+      summary: Desativa lotacao administrativa no tenant autenticado
+      operationId: deactivateAdminPractitionerRole
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lotacao desativada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPractitionerRoleResponse'
+        '404':
+          description: Lotacao nao encontrada
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /api/admin/groups:
     get:
       summary: Lista os grupos de permissao do tenant autenticado
@@ -300,6 +514,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
   /api/admin/groups/{groupId}/permissions:
+    get:
+      summary: Lista permissoes atribuidas ao grupo
+      operationId: listGroupPermissions
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de permissoes do grupo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PermissionSummary'
     post:
       summary: Adiciona uma permissao a um grupo
       operationId: addPermissionToGroup
@@ -337,6 +570,80 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/groups/{groupId}/permissions/{permissionId}:
+    delete:
+      summary: Remove permissao de um grupo
+      operationId: removePermissionFromGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Permissao removida
+  /api/admin/groups/{groupId}/members:
+    get:
+      summary: Lista membros de um grupo
+      operationId: listGroupMembers
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de membros do grupo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupMemberSummary'
+  /api/admin/groups/{groupId}/members/{userId}:
+    delete:
+      summary: Remove membro de um grupo
+      operationId: removeGroupMember
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Membro removido
+  /api/admin/groups/{groupId}:
+    delete:
+      summary: Exclui grupo RBAC
+      operationId: deleteGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Grupo excluido
   /api/admin/users/{userId}/permissions:
     get:
       summary: Lista permissoes efetivas de um usuario
@@ -369,6 +676,70 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
+  /api/admin/audit:
+    get:
+      summary: Lista trilha de auditoria por tenant
+      operationId: listAuditEvents
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: Eventos de auditoria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEventSummary'
+  /api/admin/sessions:
+    get:
+      summary: Lista sessoes administrativas do tenant
+      operationId: listAdminSessions
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: Lista de sessoes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminSessionSummary'
+  /api/admin/sessions/{sessionId}/revoke:
+    post:
+      summary: Revoga sessao administrativa com motivo auditavel
+      operationId: revokeAdminSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeAdminSessionRequest'
+      responses:
+        '204':
+          description: Sessao revogada
 components:
   schemas:
     IdentifierLite:
@@ -542,6 +913,150 @@ components:
           format: uuid
         roleCode:
           type: string
+    CreateAdminLocationRequest:
+      type: object
+      required: [organizationId, displayName]
+      properties:
+        organizationId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        fhirName:
+          type: string
+        fhirStatus:
+          type: string
+        fhirMode:
+          type: string
+    UpdateAdminLocationRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        fhirName:
+          type: string
+        fhirStatus:
+          type: string
+        fhirMode:
+          type: string
+        accountActive:
+          type: boolean
+    AdminLocationResponse:
+      type: object
+      required: [id, tenantId, organizationId, displayName, fhirName, fhirStatus, fhirMode, accountActive]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        fhirName:
+          type: string
+        fhirStatus:
+          type: string
+        fhirMode:
+          type: string
+        accountActive:
+          type: boolean
+    CreateAdminPractitionerRoleRequest:
+      type: object
+      required: [organizationId, locationId, practitionerId, roleCode]
+      properties:
+        organizationId:
+          type: string
+          format: uuid
+        locationId:
+          type: string
+          format: uuid
+        practitionerId:
+          type: string
+          format: uuid
+        roleCode:
+          type: string
+        primaryRole:
+          type: boolean
+        fhirCodeJson:
+          type: string
+        fhirSpecialtyJson:
+          type: string
+        fhirTelecomJson:
+          type: string
+        fhirAvailableTimeJson:
+          type: string
+    UpdateAdminPractitionerRoleRequest:
+      type: object
+      properties:
+        roleCode:
+          type: string
+        active:
+          type: boolean
+        primaryRole:
+          type: boolean
+        periodStart:
+          type: string
+          format: date-time
+        periodEnd:
+          type: string
+          format: date-time
+        fhirCodeJson:
+          type: string
+        fhirSpecialtyJson:
+          type: string
+        fhirTelecomJson:
+          type: string
+        fhirAvailableTimeJson:
+          type: string
+    AdminPractitionerRoleResponse:
+      type: object
+      required: [id, tenantId, organizationId, locationId, practitionerId, roleCode, active, primaryRole]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        locationId:
+          type: string
+          format: uuid
+        practitionerId:
+          type: string
+          format: uuid
+        roleCode:
+          type: string
+        active:
+          type: boolean
+        primaryRole:
+          type: boolean
+        periodStart:
+          type: string
+          format: date-time
+          nullable: true
+        periodEnd:
+          type: string
+          format: date-time
+          nullable: true
+        fhirCodeJson:
+          type: string
+          nullable: true
+        fhirSpecialtyJson:
+          type: string
+          nullable: true
+        fhirTelecomJson:
+          type: string
+          nullable: true
+        fhirAvailableTimeJson:
+          type: string
+          nullable: true
     OrganizationSummary:
       type: object
       required: [id, name, displayName, cnes, identifiers, active, accountActive]
@@ -800,6 +1315,101 @@ components:
           type: string
           enum: [group, direct]
           description: Origem da concessao da permissao
+    GroupMemberSummary:
+      type: object
+      required: [userId, tenantId]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          nullable: true
+        username:
+          type: string
+          nullable: true
+    AuditEventSummary:
+      type: object
+      required: [id, eventType, outcome]
+      properties:
+        id:
+          type: string
+          format: uuid
+        actorUserId:
+          type: string
+          format: uuid
+          nullable: true
+        actorPractitionerId:
+          type: string
+          format: uuid
+          nullable: true
+        eventType:
+          type: string
+        outcome:
+          type: string
+        traceId:
+          type: string
+          nullable: true
+        payload:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+    AdminSessionSummary:
+      type: object
+      required: [id, tenantId, userId, active]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+          nullable: true
+        issuedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+        traceId:
+          type: string
+          nullable: true
+        clientIp:
+          type: string
+          nullable: true
+        userAgent:
+          type: string
+          nullable: true
+        revocationReason:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+    RevokeAdminSessionRequest:
+      type: object
+      properties:
+        revocationReason:
+          type: string
+          maxLength: 64
     OperationOutcome:
       type: object
       required: [resourceType, issue]

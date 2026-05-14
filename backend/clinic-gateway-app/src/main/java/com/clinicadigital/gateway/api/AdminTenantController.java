@@ -71,6 +71,8 @@ public class AdminTenantController {
                     TenantAdminProfileService.TenantAdminSummary admin = tenantAdminProfileService
                             .findTenantAdmin(t.getId())
                             .orElse(null);
+                    TenantAdminProfileService.OrgFhirFields orgFhir =
+                            tenantAdminProfileService.getOrgFhirFields(t.getId());
                     return new TenantSummaryResponse(
                             t.getId(),
                             t.getSlug(),
@@ -79,7 +81,13 @@ public class AdminTenantController {
                             t.getPlanTier(),
                             admin != null ? admin.displayName() : null,
                             admin != null ? admin.email() : null,
-                            admin != null ? admin.cpf() : null);
+                            admin != null ? admin.cpf() : null,
+                            orgFhir != null ? orgFhir.fhirTypeJson() : null,
+                            orgFhir != null ? orgFhir.fhirAliasJson() : null,
+                            orgFhir != null ? orgFhir.fhirTelecomJson() : null,
+                            orgFhir != null ? orgFhir.fhirAddressJson() : null,
+                            orgFhir != null ? orgFhir.fhirPartOfOrgId() : null,
+                            orgFhir != null ? orgFhir.fhirEndpointRefsJson() : null);
                 })
                 .toList();
         return ResponseEntity.ok(tenants);
@@ -97,6 +105,15 @@ public class AdminTenantController {
                     request.adminPractitioner().email(),
                     request.adminPractitioner().cpf(),
                     request.adminPractitioner().password());
+
+            tenantAdminProfileService.updateOrgFhirFields(result.tenantId(),
+                    new TenantAdminProfileService.OrgFhirFields(
+                            request.organization().fhirTypeJson(),
+                            request.organization().fhirAliasJson(),
+                            request.organization().fhirTelecomJson(),
+                            request.organization().fhirAddressJson(),
+                            request.organization().fhirPartOfOrgId(),
+                            request.organization().fhirEndpointRefsJson()));
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new CreateTenantAdminResponse(
@@ -152,6 +169,15 @@ public class AdminTenantController {
                     request.adminPractitioner().cpf(),
                     request.adminPractitioner().password());
 
+            tenantAdminProfileService.updateOrgFhirFields(tenantId,
+                    new TenantAdminProfileService.OrgFhirFields(
+                            request.organization().fhirTypeJson(),
+                            request.organization().fhirAliasJson(),
+                            request.organization().fhirTelecomJson(),
+                            request.organization().fhirAddressJson(),
+                            request.organization().fhirPartOfOrgId(),
+                            request.organization().fhirEndpointRefsJson()));
+
             return ResponseEntity.ok(new TenantSummaryResponse(
                     updated.getId(),
                     updated.getSlug(),
@@ -160,7 +186,13 @@ public class AdminTenantController {
                     updated.getPlanTier(),
                     admin.displayName(),
                     admin.email(),
-                    admin.cpf()));
+                    admin.cpf(),
+                    request.organization().fhirTypeJson(),
+                    request.organization().fhirAliasJson(),
+                    request.organization().fhirTelecomJson(),
+                    request.organization().fhirAddressJson(),
+                    request.organization().fhirPartOfOrgId(),
+                    request.organization().fhirEndpointRefsJson()));
         } catch (TenantAlreadyExistsException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(buildOperationOutcome("conflict", ex.getMessage()));
@@ -194,7 +226,13 @@ public class AdminTenantController {
     public record OrganizationCreateInput(
             @NotBlank String displayName,
             @NotBlank @Pattern(regexp = "\\d{7}",
-                    message = "cnes must be exactly 7 numeric digits") String cnes
+                    message = "cnes must be exactly 7 numeric digits") String cnes,
+            String fhirTypeJson,
+            String fhirAliasJson,
+            String fhirTelecomJson,
+            String fhirAddressJson,
+            String fhirPartOfOrgId,
+            String fhirEndpointRefsJson
     ) {}
 
     public record PractitionerCreateInput(
@@ -213,7 +251,13 @@ public class AdminTenantController {
             String planTier,
             String adminDisplayName,
             String adminEmail,
-            String adminCpf
+            String adminCpf,
+            String orgFhirTypeJson,
+            String orgFhirAliasJson,
+            String orgFhirTelecomJson,
+            String orgFhirAddressJson,
+            String orgFhirPartOfOrgId,
+            String orgFhirEndpointRefsJson
     ) {}
 
     public record UpdateTenantRequest(

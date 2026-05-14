@@ -46,6 +46,29 @@ public class Organization {
     @Column(name = "fhir_identifier_json", nullable = false, columnDefinition = "jsonb")
     private String fhirIdentifierJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_type_json", columnDefinition = "jsonb")
+    private String fhirTypeJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_alias_json", columnDefinition = "jsonb")
+    private String fhirAliasJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_telecom_json", columnDefinition = "jsonb")
+    private String fhirTelecomJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_address_json", columnDefinition = "jsonb")
+    private String fhirAddressJson;
+
+    @Column(name = "fhir_part_of_org_id")
+    private UUID fhirPartOfOrgId;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_endpoint_refs_json", columnDefinition = "jsonb")
+    private String fhirEndpointRefsJson;
+
     @Column(name = "fhir_name", nullable = false)
     private String fhirName;
 
@@ -143,6 +166,54 @@ public class Organization {
 
     public String getFhirIdentifierJson() {
         return fhirIdentifierJson;
+    }
+
+    public String getFhirTypeJson() {
+        return fhirTypeJson;
+    }
+
+    public String getFhirAliasJson() {
+        return fhirAliasJson;
+    }
+
+    public String getFhirTelecomJson() {
+        return fhirTelecomJson;
+    }
+
+    public String getFhirAddressJson() {
+        return fhirAddressJson;
+    }
+
+    public UUID getFhirPartOfOrgId() {
+        return fhirPartOfOrgId;
+    }
+
+    public String getFhirEndpointRefsJson() {
+        return fhirEndpointRefsJson;
+    }
+
+    public void setFhirTypeJson(String fhirTypeJson) {
+        this.fhirTypeJson = fhirTypeJson;
+    }
+
+    public void setFhirAliasJson(String fhirAliasJson) {
+        this.fhirAliasJson = fhirAliasJson;
+    }
+
+    public void setFhirTelecomJson(String fhirTelecomJson) {
+        this.fhirTelecomJson = fhirTelecomJson;
+    }
+
+    public void setFhirAddressJson(String fhirAddressJson) {
+        this.fhirAddressJson = fhirAddressJson;
+    }
+
+    public void setFhirPartOfOrgId(UUID fhirPartOfOrgId) {
+        this.fhirPartOfOrgId = fhirPartOfOrgId;
+    }
+
+    public void setFhirEndpointRefsJson(String fhirEndpointRefsJson) {
+        this.fhirEndpointRefsJson = fhirEndpointRefsJson;
     }
 
     public String getFhirName() {

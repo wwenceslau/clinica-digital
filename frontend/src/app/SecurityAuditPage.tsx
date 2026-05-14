@@ -32,9 +32,11 @@ import { useAuth } from '../context/AuthContext';
 interface AuditEventSummary {
   id: string;
   actorUserId: string | null;
+  actorPractitionerId: string | null;
   eventType: string;
   outcome: string;
   traceId: string | null;
+  payload: string | null;
   createdAt: string | null;
 }
 
@@ -129,13 +131,15 @@ export function SecurityAuditPage(): React.ReactElement {
               <TableCell><strong>Evento</strong></TableCell>
               <TableCell><strong>Resultado</strong></TableCell>
               <TableCell><strong>Ator (userId)</strong></TableCell>
+              <TableCell><strong>Ator (practitionerId)</strong></TableCell>
+              <TableCell><strong>Payload (min)</strong></TableCell>
               <TableCell><strong>Trace ID</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {events.length === 0 && !loading ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                   Nenhum evento de auditoria encontrado.
                 </TableCell>
               </TableRow>
@@ -161,6 +165,12 @@ export function SecurityAuditPage(): React.ReactElement {
                   </TableCell>
                   <TableCell sx={{ fontSize: 11, color: 'text.secondary', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {e.actorUserId ?? '—'}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: 11, color: 'text.secondary', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {e.actorPractitionerId ?? '—'}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: 11, color: 'text.secondary', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {e.payload ?? '—'}
                   </TableCell>
                   <TableCell sx={{ fontSize: 11, color: 'text.secondary', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {e.traceId ?? '—'}

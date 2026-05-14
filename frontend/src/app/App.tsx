@@ -33,10 +33,12 @@ import { listTenants, createTenantApi, updateTenantApi, deleteTenantApi } from '
 import type { CreateTenantRequest } from '../services/tenantApi';
 import { fromCaughtError } from '../services/operationOutcomeAdapter';
 import { ProtectedRoute } from './ProtectedRoute';
-import { AdminUsuariosPage } from './AdminUsuariosPage';
+import { AdminLocationsPage } from './AdminLocationsPage';
+import { AdminPractitionerRolesPage } from './AdminPractitionerRolesPage';
 import { SecurityUsersPage } from './SecurityUsersPage';
 import { SecurityRolesPage } from './SecurityRolesPage';
 import { SecurityAuditPage } from './SecurityAuditPage';
+import { SecurityGroupsPage } from './SecurityGroupsPage';
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { RbacPermissionGuard } from '../components/atoms/RbacPermissionGuard';
@@ -105,15 +107,6 @@ function RegisterPage() {
   );
 }
 
-
-type SessionItem = {
-  id: string;
-  tenantSlug: string;
-  user: string;
-  outcome: 'success' | 'failure';
-  traceId: string;
-};
-
 /**
  * T137 [US5] Wrapper que injeta MainTemplate com contexto real de autenticação.
  *
@@ -165,6 +158,12 @@ function TenantAdminPage() {
             adminDisplayName: t.adminDisplayName,
             adminEmail: t.adminEmail,
             adminCpf: t.adminCpf,
+            orgFhirTypeJson: t.orgFhirTypeJson,
+            orgFhirAliasJson: t.orgFhirAliasJson,
+            orgFhirTelecomJson: t.orgFhirTelecomJson,
+            orgFhirAddressJson: t.orgFhirAddressJson,
+            orgFhirPartOfOrgId: t.orgFhirPartOfOrgId,
+            orgFhirEndpointRefsJson: t.orgFhirEndpointRefsJson,
           })),
         ),
       )
@@ -208,6 +207,12 @@ function TenantAdminPage() {
                       adminDisplayName: payload.adminPractitioner.displayName,
                       adminEmail: payload.adminPractitioner.email,
                       adminCpf: payload.adminPractitioner.cpf,
+                      orgFhirTypeJson: payload.organization.fhirTypeJson ?? null,
+                      orgFhirAliasJson: payload.organization.fhirAliasJson ?? null,
+                      orgFhirTelecomJson: payload.organization.fhirTelecomJson ?? null,
+                      orgFhirAddressJson: payload.organization.fhirAddressJson ?? null,
+                      orgFhirPartOfOrgId: payload.organization.fhirPartOfOrgId ?? null,
+                      orgFhirEndpointRefsJson: payload.organization.fhirEndpointRefsJson ?? null,
                     },
                   ]);
                 })
@@ -240,6 +245,12 @@ function TenantAdminPage() {
                             adminDisplayName: updated.adminDisplayName,
                             adminEmail: updated.adminEmail,
                             adminCpf: updated.adminCpf,
+                            orgFhirTypeJson: updated.orgFhirTypeJson ?? null,
+                            orgFhirAliasJson: updated.orgFhirAliasJson ?? null,
+                            orgFhirTelecomJson: updated.orgFhirTelecomJson ?? null,
+                            orgFhirAddressJson: updated.orgFhirAddressJson ?? null,
+                            orgFhirPartOfOrgId: updated.orgFhirPartOfOrgId ?? null,
+                            orgFhirEndpointRefsJson: updated.orgFhirEndpointRefsJson ?? null,
                           }
                         : t,
                     ),
@@ -266,7 +277,7 @@ function TenantAdminPage() {
             }}
           />
         </RbacPermissionGuard>
-        <SessionHistory sessions={[] as SessionItem[]} />
+        <SessionHistory />
       </Stack>
     </ShellPage>
   );
@@ -292,8 +303,11 @@ export default function App() {
                       <ProtectedRoute>
                         <Routes>
                           <Route path="/admin/tenants" element={<TenantAdminPage />} />
-                          <Route path="/admin/usuarios" element={<ShellPage><AdminUsuariosPage /></ShellPage>} />
+                          <Route path="/admin/locations" element={<ShellPage><AdminLocationsPage /></ShellPage>} />
+                          <Route path="/admin/practitioner-roles" element={<ShellPage><AdminPractitionerRolesPage /></ShellPage>} />
+                          <Route path="/admin/usuarios" element={<Navigate to="/admin/security/users" replace />} />
                           <Route path="/admin/security/users" element={<ShellPage><SecurityUsersPage /></ShellPage>} />
+                          <Route path="/admin/security/groups" element={<ShellPage><SecurityGroupsPage /></ShellPage>} />
                           <Route path="/admin/security/roles" element={<ShellPage><SecurityRolesPage /></ShellPage>} />
                           <Route path="/admin/security/audit" element={<ShellPage><SecurityAuditPage /></ShellPage>} />
                           {/* Default shell — redirects to /admin/tenants */}

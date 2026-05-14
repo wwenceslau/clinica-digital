@@ -43,6 +43,7 @@ import i18n from "../../i18n/config";
 import { headerNamespaceKeys } from "../../i18n/shell-namespaces"; // T050
 import { emitShellTelemetry } from "../../services/observability"; // T051
 import { persistLocationId, resolveActiveLocation } from "../../services/locationPersistence";
+import { listAdminLocations } from "../../services/adminLocationApi";
 
 // T052 — lazy-load heavy Sidebar organism to defer its JS parsing
 const Sidebar = React.lazy(() =>
@@ -110,6 +111,7 @@ function MainTemplateContent({
   const [activeLocationId, setActiveLocationId] = useState<string>(
     activeLocationFromContext?.location_id ?? tenant.locationId ?? "",
   );
+  const [adminLocationOptions, setAdminLocationOptions] = useState<Array<{ location_id: string; location_name: string }>>([]);
 
   // Sync activeLocationId when TenantContext resolves (async load after mount)
   useEffect(() => {
@@ -120,10 +122,44 @@ function MainTemplateContent({
     }
   }, [activeLocationFromContext, tenant.locationId]);
 
-  const availableLocations =
+  useEffect(() => {
+    if (!session || session.practitioner.profileType !== 10 || !effectiveTenantId) {
+      setAdminLocationOptions([]);
+      return;
+    }
+
+    let cancelled = false;
+    listAdminLocations(effectiveTenantId)
+      .then((locations) => {
+        if (cancelled) {
+          return;
+        }
+        const next = locations
+          .filter((loc) => loc.accountActive)
+          .map((loc) => ({ location_id: loc.id, location_name: loc.displayName }));
+        setAdminLocationOptions(next);
+
+        if (!activeLocationId && next.length > 0) {
+          setActiveLocationId(next[0].location_id);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAdminLocationOptions([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, effectiveTenantId, activeLocationId]);
+
+  const contextLocations =
     tenant.locationId && tenant.locationName
       ? [{ location_id: tenant.locationId, location_name: tenant.locationName }]
       : [];
+
+  const availableLocations = adminLocationOptions.length > 0 ? adminLocationOptions : contextLocations;
 
   // T051 — emit shell.render telemetry on mount (includes T050 namespace keys)
   useEffect(() => {

@@ -319,6 +319,11 @@ Constraints:
 - Profile 0 usa policy separada de super-user no banco, controlada por contexto de sessao/role tecnica auditada; nao ha bypass fora do RLS.
 - Toda migration de tabela tenant-scoped deve incluir policy RLS no mesmo change set.
 
+## Reconvergence Notes (Phase 18)
+- Projecao administrativa de sessoes: `GET /api/admin/sessions` expone campos operacionais (`issuedAt`, `expiresAt`, `revokedAt`, `revocationReason`, `traceId`, `active`) por `tenant_id`.
+- Revogacao administrativa: `POST /api/admin/sessions/{sessionId}/revoke` persiste `revocation_reason` auditavel (`admin_revoke` por padrao).
+- Projecao administrativa de auditoria: `GET /api/admin/audit` inclui `actor_user_id`, `actor_practitioner_id` e payload minimizado para exibicao segura na UI.
+
 ## Security Classification
 - PII sensivel: `cpf_encrypted`; valores sensiveis em `fhir_identifier_json` devem permanecer mascarados, tokenizados ou derivados sob demanda.
 - Credencial: `password_hash` (hash unidirecional; nunca armazenar senha em texto puro).

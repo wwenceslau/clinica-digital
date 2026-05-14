@@ -121,6 +121,15 @@ export function getDefaultNavigationSchema(tenantId: string): SidebarDomainSchem
             permission_key: "perm.admin:read:tenant-settings",
             permitted: true,
           },
+          {
+            resource_id: "admin-locations",
+            label_key: "sidebar.admin.locations",
+            icon_id: "place",
+            route: "/admin/locations",
+            domain_id: "administracao",
+            permission_key: "perm.admin:read:locations",
+            permitted: true,
+          },
         ],
       },
       {

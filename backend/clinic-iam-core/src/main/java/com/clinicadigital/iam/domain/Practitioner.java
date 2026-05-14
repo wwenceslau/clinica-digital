@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDate;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -56,6 +57,28 @@ public class Practitioner {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "fhir_name_json", nullable = false, columnDefinition = "jsonb")
     private String fhirNameJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_telecom_json", columnDefinition = "jsonb")
+    private String fhirTelecomJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_address_json", columnDefinition = "jsonb")
+    private String fhirAddressJson;
+
+    @Column(name = "fhir_gender", length = 16)
+    private String fhirGender;
+
+    @Column(name = "fhir_birth_date")
+    private LocalDate fhirBirthDate;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_qualification_json", columnDefinition = "jsonb")
+    private String fhirQualificationJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_communication_json", columnDefinition = "jsonb")
+    private String fhirCommunicationJson;
 
     @Column(name = "fhir_active", nullable = false)
     private boolean fhirActive = true;
@@ -148,6 +171,62 @@ public class Practitioner {
 
     public String getFhirNameJson() {
         return fhirNameJson;
+    }
+
+    public String getFhirTelecomJson() {
+        return fhirTelecomJson;
+    }
+
+    public String getFhirAddressJson() {
+        return fhirAddressJson;
+    }
+
+    public String getFhirGender() {
+        return fhirGender;
+    }
+
+    public LocalDate getFhirBirthDate() {
+        return fhirBirthDate;
+    }
+
+    public String getFhirQualificationJson() {
+        return fhirQualificationJson;
+    }
+
+    public String getFhirCommunicationJson() {
+        return fhirCommunicationJson;
+    }
+
+    public void setFhirTelecomJson(String fhirTelecomJson) {
+        this.fhirTelecomJson = fhirTelecomJson;
+    }
+
+    public void setFhirAddressJson(String fhirAddressJson) {
+        this.fhirAddressJson = fhirAddressJson;
+    }
+
+    public void setFhirGender(String fhirGender) {
+        this.fhirGender = fhirGender;
+    }
+
+    public void setFhirBirthDate(LocalDate fhirBirthDate) {
+        this.fhirBirthDate = fhirBirthDate;
+    }
+
+    public void setFhirQualificationJson(String fhirQualificationJson) {
+        this.fhirQualificationJson = fhirQualificationJson;
+    }
+
+    public void setFhirCommunicationJson(String fhirCommunicationJson) {
+        this.fhirCommunicationJson = fhirCommunicationJson;
+    }
+
+    public void setCpfEncrypted(byte[] cpfEncrypted) {
+        this.cpfEncrypted = cpfEncrypted;
+    }
+
+    public void setEncryptionKeyVersion(String encryptionKeyVersion) {
+        this.encryptionKeyVersion = encryptionKeyVersion;
     }
 
     public boolean isFhirActive() {

@@ -49,6 +49,14 @@ public class Location {
     @Column(name = "fhir_name", nullable = false)
     private String fhirName;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_telecom_json", columnDefinition = "jsonb")
+    private String fhirTelecomJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_address_json", columnDefinition = "jsonb")
+    private String fhirAddressJson;
+
     @Column(name = "fhir_status", nullable = false, length = 32)
     private String fhirStatus;
 
@@ -107,13 +115,45 @@ public class Location {
     public UUID getTenantId() { return tenantId; }
     public UUID getOrganizationId() { return organizationId; }
     public String getFhirResourceId() { return fhirResourceId; }
+    public String getFhirMetaProfile() { return fhirMetaProfile; }
+    public String getFhirIdentifierJson() { return fhirIdentifierJson; }
     public String getFhirName() { return fhirName; }
+    public String getFhirTelecomJson() { return fhirTelecomJson; }
+    public String getFhirAddressJson() { return fhirAddressJson; }
     public String getFhirStatus() { return fhirStatus; }
     public String getFhirMode() { return fhirMode; }
     public String getDisplayName() { return displayName; }
     public boolean isAccountActive() { return accountActive; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+
+    public void setFhirName(String fhirName) {
+        this.fhirName = fhirName;
+    }
+
+    public void setFhirStatus(String fhirStatus) {
+        this.fhirStatus = fhirStatus;
+    }
+
+    public void setFhirMode(String fhirMode) {
+        this.fhirMode = fhirMode;
+    }
+
+    public void setFhirTelecomJson(String fhirTelecomJson) {
+        this.fhirTelecomJson = fhirTelecomJson;
+    }
+
+    public void setFhirAddressJson(String fhirAddressJson) {
+        this.fhirAddressJson = fhirAddressJson;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public void setAccountActive(boolean accountActive) {
+        this.accountActive = accountActive;
+    }
 
     @Override
     public boolean equals(Object other) {

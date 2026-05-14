@@ -26,6 +26,7 @@
 - Carregar e propagar `PractitionerRole` ativo apos login para compor `organizationName`, `locationName`, `practitionerName` e `profileType` no Header do Shell
 - Tratar invalidacao de sessao por logout explicito, expiracao e tenant desativado com limpeza de contexto e redirect para `/login`
 - Armazenar `password_hash` com Argon2id/bcrypt e criptografar CPF/PII via `pgcrypto`, com mapeamento DB -> API -> FHIR rastreavel
+- Reconciliar a implementacao entregue com `data-model.md`, eliminando divergencias entre migrations, entidades JPA, DTOs administrativos e telas operacionais antes do fechamento da feature
 
 ## Planning Decisions from Integration Audit
 
@@ -59,6 +60,40 @@ As pendencias remanescentes da auditoria em [checklists/integration-readiness.md
 - O plano DEVE aplicar limite por `tenant_id` para todos os endpoints autenticados e comandos CLI sensiveis, nao apenas no login.
 - Excedentes DEVEM responder com `OperationOutcome` deterministico e metadados de observabilidade (tenant, operacao, limite aplicado).
 - A configuracao DEVE prever overrides por tier de tenant para throughput, concorrencia e janelas de tempo.
+
+## Planning Decisions from Persistence/Delivery Gap Analysis (2026-05-06)
+
+As inconsistencias identificadas entre `data-model.md` e a entrega efetiva em entidades JPA, controllers e frontend REABREM parcialmente a feature 004. Os itens abaixo passam a ser mandatórios para considerar a feature aderente ao plano.
+
+### PD-007 — Sessao opaca deve ser realmente opaca
+- `iam_sessions.opaque_token_digest` DEVE ser a base exclusiva de validacao da sessao in-app.
+- O token recebido do cliente NUNCA DEVE ser interpretado como `UUID` de `iam_sessions.id`.
+- `IamSession`, `SessionManager`, repositories e filtros de autenticacao DEVEM persistir e consultar o digest SHA-256 do token opaco, preservando `organization_id`, `active_practitioner_role_id` e `revocation_reason`.
+
+### PD-008 — Lockout persistente deve usar o modelo canonico
+- `failed_login_count` e `locked_until` de `iam_users` DEVEM ser mapeados nas entidades JPA e aplicados no fluxo de autenticacao.
+- O lockout definido em FR-023 so e considerado valido quando persistido e auditavel por usuario.
+
+### PD-009 — Paridade obrigatoria entre schema SQL e entidades JPA
+- Toda coluna adicionada em V203 que conste em `data-model.md` DEVE ter mapeamento explicito nas entidades JPA correspondentes, mesmo quando opcional.
+- A ausencia de mapeamento JPA para colunas definidas no modelo passa a ser falha de conformidade arquitetural.
+
+### PD-010 — Superficie administrativa completa para Location e PractitionerRole
+- `locations` e `practitioner_roles` DEVEM possuir API administrativa tenant-aware e UI correspondente.
+- Campos obrigatorios e operacionais (`locationId`, `roleCode`, `primaryRole`, `periodStart`, `periodEnd`) NAO podem depender de valores hardcoded no frontend.
+
+### PD-011 — DTOs e telas administrativas devem refletir o modelo entregue
+- DTOs de tenant, usuario, sessao e auditoria DEVEM expor os campos minimos necessarios para operacao administrativa e rastreabilidade.
+- A superficie administrativa completa DEVE cobrir endpoints e responses de tenants, users, groups, audit e sessions sem lacunas de campos operacionais do modelo.
+- Formularios de criacao/edicao DEVEM permitir entrada dos campos exigidos pelo fluxo operacional, incluindo dados FHIR opcionais da V203 para Organization, Location, Practitioner e PractitionerRole ate o fechamento da Fase 18.
+
+### PD-012 — RBAC deve cobrir ciclo de vida completo
+- A feature RBAC so e considerada completa com operacoes de listar, criar, atribuir, remover e excluir para grupos, memberships e group-permissions.
+- A UI administrativa DEVE refletir o mesmo ciclo de vida exposto pela API.
+
+### PD-013 — Encerramento da feature depende de reconvergencia documental e funcional
+- `plan.md`, `tasks.md` e `checklist.md` DEVEM ser reabertos para registrar a remediacao dos gaps S1, S2, G1-G23.
+- O status `feature pronta para fechamento` fica suspenso ate a conclusao da fase corretiva abaixo.
 
 ## Technical Context
 
@@ -307,8 +342,9 @@ frontend/
 ### Planning Phase 2: Implementation Planning
 - [x] [tasks.md](tasks.md) gerado com ordem de dependencia
 - [x] Validacao de rastreabilidade FR/D-xxx consolidada
-- [x] Implementacao em andamento — Phases 1–6 parcialmente executadas (ver [checklists/checklist.md](checklists/checklist.md))
+- [~] Implementacao em andamento — feature reaberta parcialmente apos gap analysis de 2026-05-06
 - [ ] Atualizar checklist unico ao fim de cada fase: [checklists/checklist.md](checklists/checklist.md)
+- [ ] Executar fase corretiva de reconvergencia schema ↔ JPA ↔ API ↔ frontend
 
 ## Execution Phase Map
 
@@ -359,6 +395,12 @@ As fases abaixo sao as fases operacionais canonicas de execucao e DEVEM permanec
 
 ### Phase 14 - Polish
 - Documentacao final, performance, consistencia, fallback strategy e validacao end-to-end
+
+### Phase 18 - Reconvergencia do Modelo de Dados com Persistencia/Servico/UI
+- Correcao da sessao opaca real, lockout persistente, paridade JPA com V203, CRUD administrativo de `locations` e `practitioner_roles`, eliminacao de hardcodes, completude de DTOs administrativos (tenants/users/groups/audit/sessions), gestao completa de sessoes (listar/revogar/motivo/auditoria) e completude dos formularios UI V203
+
+### Phase 19 - Fechamento Revalidado da Feature
+- Atualizacao final de contratos, quickstart, checklist e evidencias apos a reconvergencia funcional
 
 ## Complexity Tracking
 

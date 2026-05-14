@@ -71,9 +71,11 @@ public class AdminAuditController {
                 .map(e -> new AuditEventSummary(
                         e.getId(),
                         e.getActorUserId(),
+                        e.getActorPractitionerId(),
                         e.getEventType(),
                         e.getOutcome(),
                         e.getTraceId(),
+                        minimizePayload(e.getPayloadJson()),
                         e.getCreatedAt() != null ? e.getCreatedAt().toString() : null))
                 .toList();
 
@@ -85,11 +87,24 @@ public class AdminAuditController {
     public record AuditEventSummary(
             UUID id,
             UUID actorUserId,
+                        UUID actorPractitionerId,
             String eventType,
             String outcome,
             String traceId,
+                        String payload,
             String createdAt
     ) {}
+
+        private static String minimizePayload(String payload) {
+                if (payload == null || payload.isBlank()) {
+                        return null;
+                }
+                String normalized = payload.replaceAll("\\s+", " ").trim();
+                if (normalized.length() <= 240) {
+                        return normalized;
+                }
+                return normalized.substring(0, 240) + "...";
+        }
 
     private static Map<String, Object> buildOperationOutcome(String code, String diagnostics) {
         return Map.of(

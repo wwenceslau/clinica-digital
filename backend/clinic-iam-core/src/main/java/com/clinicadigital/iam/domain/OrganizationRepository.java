@@ -38,4 +38,12 @@ public interface OrganizationRepository {
      * @return {@code true} if a matching row exists
      */
     boolean existsByDisplayNameIgnoreCase(String displayName);
+
+    /**
+     * Find the primary (root) organization for a given tenant.
+     *
+     * @param tenantId the tenant UUID
+     * @return the first organization found for that tenant, or empty
+     */
+    Optional<Organization> findFirstByTenantId(UUID tenantId);
 }

@@ -48,6 +48,12 @@ public class IamUser {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
+    @Column(name = "failed_login_count", nullable = false)
+    private int failedLoginCount;
+
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -135,6 +141,18 @@ public class IamUser {
         return practitionerId;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     public void setPractitionerId(UUID practitionerId) {
         this.practitionerId = practitionerId;
     }
@@ -145,6 +163,34 @@ public class IamUser {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public int getFailedLoginCount() {
+        return failedLoginCount;
+    }
+
+    public void setFailedLoginCount(int failedLoginCount) {
+        this.failedLoginCount = failedLoginCount;
+    }
+
+    public Instant getLockedUntil() {
+        return lockedUntil;
+    }
+
+    public void setLockedUntil(Instant lockedUntil) {
+        this.lockedUntil = lockedUntil;
+    }
+
+    public void registerLoginFailure(int threshold, Instant lockedUntil) {
+        this.failedLoginCount += 1;
+        if (this.failedLoginCount >= threshold) {
+            this.lockedUntil = lockedUntil;
+        }
+    }
+
+    public void clearLockoutState() {
+        this.failedLoginCount = 0;
+        this.lockedUntil = null;
     }
 
     public Instant getUpdatedAt() {

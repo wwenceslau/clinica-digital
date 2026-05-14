@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +34,10 @@ import java.util.UUID;
  *   <li>GET  /api/admin/permissions — list the global permission catalog (profile 10 required)</li>
  *   <li>POST /api/admin/groups/{groupId}/members — assign user to group (profile 10 required)</li>
  *   <li>POST /api/admin/groups/{groupId}/permissions — assign permission to group (profile 10 required)</li>
+ *   <li>DELETE /api/admin/groups/{groupId} — delete group (profile 10 required)</li>
+ *   <li>DELETE /api/admin/groups/{groupId}/members/{userId} — remove user from group (profile 10 required)</li>
+ *   <li>DELETE /api/admin/groups/{groupId}/permissions/{permissionId} — remove permission from group (profile 10 required)</li>
+ *   <li>GET  /api/admin/groups/{groupId}/members — list members of a group (profile 10 required)</li>
  *   <li>GET  /api/admin/groups/{groupId}/permissions — list permissions of a group (profile 10 required)</li>
  *   <li>GET  /api/admin/users/{userId}/permissions — list permissions of a user (profile 10 required)</li>
  * </ul>
@@ -148,6 +153,100 @@ public class AdminGroupController {
         } catch (SecurityException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(buildOperationOutcome("forbidden", ex.getMessage()));
+        } catch (NoSuchElementException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(buildOperationOutcome("not-found", ex.getMessage()));
+        }
+    }
+
+    // ── Remove permission from group ─────────────────────────────────────────
+
+    @DeleteMapping("/api/admin/groups/{groupId}/permissions/{permissionId}")
+    public ResponseEntity<?> removePermissionFromGroup(
+            HttpServletRequest request,
+            @PathVariable("groupId") UUID groupId,
+            @PathVariable("permissionId") UUID permissionId) {
+
+        var auth = resolveAdminContext(request);
+        if (auth.error() != null) return auth.error();
+
+        try {
+            rbacGroupService.removePermissionFromGroup(
+                    auth.tenantId(), groupId, permissionId, auth.adminUserId());
+            return ResponseEntity.noContent().build();
+
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(buildOperationOutcome("forbidden", ex.getMessage()));
+        } catch (NoSuchElementException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(buildOperationOutcome("not-found", ex.getMessage()));
+        }
+    }
+
+    // ── Remove member from group ─────────────────────────────────────────────
+
+    @DeleteMapping("/api/admin/groups/{groupId}/members/{userId}")
+    public ResponseEntity<?> removeMemberFromGroup(
+            HttpServletRequest request,
+            @PathVariable("groupId") UUID groupId,
+            @PathVariable("userId") UUID userId) {
+
+        var auth = resolveAdminContext(request);
+        if (auth.error() != null) return auth.error();
+
+        try {
+            rbacGroupService.removeUserFromGroup(
+                    auth.tenantId(), groupId, userId, auth.adminUserId());
+            return ResponseEntity.noContent().build();
+
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(buildOperationOutcome("forbidden", ex.getMessage()));
+        } catch (NoSuchElementException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(buildOperationOutcome("not-found", ex.getMessage()));
+        }
+    }
+
+    // ── Delete group ─────────────────────────────────────────────────────────
+
+    @DeleteMapping("/api/admin/groups/{groupId}")
+    public ResponseEntity<?> deleteGroup(
+            HttpServletRequest request,
+            @PathVariable("groupId") UUID groupId) {
+
+        var auth = resolveAdminContext(request);
+        if (auth.error() != null) return auth.error();
+
+        try {
+            rbacGroupService.deleteGroup(auth.tenantId(), groupId, auth.adminUserId());
+            return ResponseEntity.noContent().build();
+
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(buildOperationOutcome("forbidden", ex.getMessage()));
+        } catch (NoSuchElementException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(buildOperationOutcome("not-found", ex.getMessage()));
+        }
+    }
+
+    // ── List group members ───────────────────────────────────────────────────
+
+    @GetMapping("/api/admin/groups/{groupId}/members")
+    public ResponseEntity<?> listGroupMembers(
+            HttpServletRequest request,
+            @PathVariable("groupId") UUID groupId) {
+
+        var auth = resolveAdminContext(request);
+        if (auth.error() != null) return auth.error();
+
+        try {
+            List<RbacGroupService.IamUserResult> members =
+                    rbacGroupService.listGroupMembers(auth.tenantId(), groupId);
+            return ResponseEntity.ok(members);
+
         } catch (NoSuchElementException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(buildOperationOutcome("not-found", ex.getMessage()));

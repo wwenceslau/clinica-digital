@@ -26,6 +26,7 @@
     "java.configuration.updateBuildConfiguration": "automatic",
     "maven.executable.preferMavenWrapper": true,
     "typescript.tsdk": "frontend/node_modules/typescript/lib",
-    "js/ts.tsdk.path": "frontend/node_modules/typescript/lib"
+    "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
+    "java.debug.settings.onBuildFailureProceed": true
 }
 

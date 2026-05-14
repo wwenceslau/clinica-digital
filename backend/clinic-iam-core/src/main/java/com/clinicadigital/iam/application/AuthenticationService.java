@@ -77,7 +77,7 @@ public class AuthenticationService {
         auditService.logAuthEvent(tenantId, user.getId(), "auth.login", "success", traceId,
                 metadata(clientIp, userAgent, "session_created"));
 
-        return new LoginResult(session.id(), session.expiresAt(), tenantId, user.getId(), traceId);
+        return new LoginResult(session.opaqueToken(), session.expiresAt(), tenantId, user.getId(), traceId);
     }
 
     /**
@@ -125,8 +125,24 @@ public class AuthenticationService {
             IamSession session = sessionManager.createSession(user.getId(), null, traceId);
             // Audit deferred: super-user sessions have no tenant context;
             // full audit will be emitted once crosslogin infrastructure is in place (V204).
+                return new MultiOrgLoginResult.SingleOrg(
+                    session.opaqueToken(), session.expiresAt(), null, user.getId(), traceId);
+        }
+
+        // Tenant admin (profile=10): resolve org directly via tenantId — no PractitionerRole needed
+        if (user.getProfile() == 10) {
+            Organization adminOrg = organizationRepository.findFirstByTenantId(user.getTenantId())
+                    .filter(Organization::isAccountActive)
+                    .orElseThrow(() -> {
+                        auditService.logAuthEvent(user.getTenantId(), user.getId(), "auth.login", "failure", traceId,
+                                metadata(clientIp, userAgent, "no_active_organization_for_admin"));
+                        return new InvalidCredentialsException("invalid credentials");
+                    });
+            IamSession session = sessionManager.createSession(user.getId(), adminOrg.getId(), traceId);
+            auditService.logAuthEvent(adminOrg.getId(), user.getId(), "auth.login", "success", traceId,
+                    metadata(clientIp, userAgent, "admin_session_created"));
             return new MultiOrgLoginResult.SingleOrg(
-                    session.id(), session.expiresAt(), null, user.getId(), traceId);
+                    session.opaqueToken(), session.expiresAt(), adminOrg.getId(), user.getId(), traceId);
         }
 
         // Tenant-scoped user: resolve active organizations via PractitionerRole
@@ -156,8 +172,8 @@ public class AuthenticationService {
             IamSession session = sessionManager.createSession(user.getId(), org.getId(), traceId);
             auditService.logAuthEvent(org.getId(), user.getId(), "auth.login", "success", traceId,
                     metadata(clientIp, userAgent, "single_org_session"));
-            return new MultiOrgLoginResult.SingleOrg(
-                    session.id(), session.expiresAt(), org.getId(), user.getId(), traceId);
+                return new MultiOrgLoginResult.SingleOrg(
+                    session.opaqueToken(), session.expiresAt(), org.getId(), user.getId(), traceId);
         }
 
         // Multiple orgs: issue challenge
@@ -190,7 +206,7 @@ public class AuthenticationService {
         auditService.logAuthEvent(organizationId, resolved.iamUserId(), "auth.select_org", "success", traceId,
                 "{\"organization_id\":\"" + organizationId + "\"}");
 
-        return new LoginResult(session.id(), session.expiresAt(), organizationId, resolved.iamUserId(), traceId);
+        return new LoginResult(session.opaqueToken(), session.expiresAt(), organizationId, resolved.iamUserId(), traceId);
     }
 
     @Transactional

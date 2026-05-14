@@ -14,6 +14,10 @@ import java.util.UUID;
  */
 public interface PractitionerRoleRepository {
 
+    List<PractitionerRole> findByTenantId(UUID tenantId);
+
+    Optional<PractitionerRole> findByIdAndTenantId(UUID id, UUID tenantId);
+
     /**
      * Find all active practitioner roles for a given practitioner.
      *

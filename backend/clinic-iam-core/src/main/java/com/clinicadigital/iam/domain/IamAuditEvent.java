@@ -55,6 +55,9 @@ public class IamAuditEvent {
     @Column(name = "actor_user_id", updatable = false)
     private UUID actorUserId;
 
+    @Column(name = "actor_practitioner_id", updatable = false)
+    private UUID actorPractitionerId;
+
     @Column(name = "event_type", nullable = false, updatable = false)
     private String eventType;
 
@@ -67,6 +70,10 @@ public class IamAuditEvent {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata_json", columnDefinition = "jsonb", updatable = false)
     private String metadataJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "payload_json", columnDefinition = "jsonb", updatable = false)
+    private String payloadJson;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -82,6 +89,7 @@ public class IamAuditEvent {
         this.outcome = outcome;
         this.traceId = traceId;
         this.metadataJson = metadataJson;
+        this.payloadJson = metadataJson;
     }
 
     @PrePersist
@@ -117,6 +125,14 @@ public class IamAuditEvent {
 
     public String getMetadataJson() {
         return metadataJson;
+    }
+
+    public UUID getActorPractitionerId() {
+        return actorPractitionerId;
+    }
+
+    public String getPayloadJson() {
+        return payloadJson;
     }
 
     public Instant getCreatedAt() {

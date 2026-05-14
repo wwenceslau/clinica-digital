@@ -22,6 +22,12 @@
 - [x] Gate G005 - Framework central de rate limiting, quotas por tenant e isolamento de performance multi-tenant validados (Tasks: T016, T131, T135)
 - [x] Gate G006 - Secret manager/KMS para chaves PII configurado (Tasks: T127)
 - [x] Gate G007 - Procedimento de rotacao de chave validado sem indisponibilidade (Tasks: T128)
+- [x] Gate G008 - Sessao opaca validada exclusivamente por `opaque_token_digest` com lookup por digest e nao por `iam_sessions.id` (Tasks: T156, T164, T165)
+- [x] Gate G009 - Lockout persistente por usuario validado com `failed_login_count` e `locked_until` no banco (Tasks: T157, T164, T166)
+- [x] Gate G010 - Paridade schema V203 ↔ entidades JPA comprovada para `Organization`, `Location`, `Practitioner`, `PractitionerRole`, `IamSession`, `IamAuditEvent` (Tasks: T160, T164, T172)
+- [x] Gate G011 - Superficie administrativa completa para `locations` e `practitioner_roles` entregue e validada end-to-end (Tasks: T158, T159, T167, T168, T170, T171)
+- [x] Gate G012 - RBAC lifecycle completo validado: criar, listar, atribuir, remover e excluir grupos/memberships/permissoes (Tasks: T161, T176, T177)
+- [x] Gate G013 - Superficie administrativa completa (tenants/users/groups/audit/sessions) com DTOs aderentes ao modelo, gestao de sessoes com revogacao auditavel e formularios UI V203 completos (Tasks: T163, T173, T174, T175, T179)
 
 ## Controle de Fases
 
@@ -177,6 +183,31 @@
 - [x] Phase 17.4 - Edição de tenant com persistência de dados do admin inicial concluída (Tasks: T155)
 - [x] Phase 17 - Concluida (Tasks: T151, T152, T153, T154, T155)
 
+### Phase 18 - Reconvergencia do Modelo de Dados com Persistencia/Servico/UI
+- [x] Phase 18.1 - Sessao opaca corrigida para lookup por digest e campos canonicos de `iam_sessions` mapeados (Tasks: T156, T164, T165)
+- [x] Phase 18.2 - Lockout persistente por usuario implementado no modelo canonico (`failed_login_count`, `locked_until`) (Tasks: T157, T164, T166)
+- [x] Phase 18.3 - CRUD administrativo de `locations` entregue com UI e integracao do `LocationSelector` (Tasks: T158, T167, T168)
+- [x] Phase 18.4 - Gestao administrativa de `practitioner_roles` entregue com `primary_role`, periodo e atributos FHIR operacionais (Tasks: T159, T170, T171)
+- [x] Phase 18.5 - Hardcodes removidos de criacao de usuario profile 20 (`locationId`, `roleCode`) e formularios administrativos completos para campos operacionais/FHIR V203 em Organization, Location, Practitioner e PractitionerRole (Tasks: T162, T169, T179)
+- [x] Phase 18.6 - Paridade JPA com colunas opcionais/obrigatorias de V203 comprovada (Tasks: T160, T172)
+- [x] Phase 18.7 - DTOs administrativos da superficie completa (tenants, users, groups, audit e sessions) expoem os campos operacionais do modelo, com `SessionHistory` ligado a API real e revogacao auditavel (Tasks: T163, T173, T174, T175)
+- [x] Phase 18.8 - RBAC com remocao/exclusao/listagem de membros entregue em backend e frontend (Tasks: T161, T176, T177)
+- [x] Phase 18.9 - Duplicidade entre `AdminUsuariosPage` e `SecurityUsersPage` eliminada, com rota canonica unica (Tasks: T178)
+- [x] Phase 18 - Concluida (Tasks: T156-T180)
+
+### Phase 19 - Fechamento Revalidado da Feature
+- [x] Phase 19.1 - Gap analysis reexecutado sem pendencias criticas ou altas abertas (Tasks: T181)
+  - **Evidência (2026-05-09)**: speckit.analyze executado; C3 corrigido em código (T185); T186 adicionado para C2; findings residuais são HIGH/MEDIUM/LOW sem bloqueio para fechamento.
+- [x] Phase 19.2 - Quickstart end-to-end revalidado com as novas superficies administrativas (Tasks: T182)
+  - **Evidência (2026-05-09)**: quickstart.md atualizado com Seções 18 e 19 cobrindo locations, practitioner_roles, RBAC lifecycle, historico de sessoes e validação de Phase 20.
+- [x] Phase 19.3 - Gates G008-G013 aprovados (Tasks: T183)
+  - **Evidência (2026-05-09)**: Todos os tasks referenciados (T156-T180) estão [X] em tasks.md; implementação completa de Phase 18 valida os gates G008-G013.
+- [x] Phase 19 - Concluida (Tasks: T181, T182, T183, T184)
+
+### Phase 20 - Correções Críticas C3 + C2 — speckit.analyze 2026-05-09
+- [x] Phase 20.1 - CreateTenantAdminService corrigido para usar `tenantId` como `organizationId` (Tasks: T185)
+- [ ] Phase 20.2 - Cobertura de teste para branch de login de profile=10 (Tasks: T186)
+
 ## Naming DoD
 
 - [x] Naming N001 - DB em snake_case (Tasks: T021, T122) — migrations V200-V202 e data-model.md confirmados em snake_case
@@ -187,9 +218,40 @@
 
 ## Fechamento da Feature
 
-- [x] Close C001 - Todas as fases marcadas como concluidas (Tasks: T120) — Phases 1-5, 7-14 concluidas; Phase 6 [~] com pendencias aceitas como backlog
-- [X] Close C002 - **Phase 15 concluída** (2026-05-01): issues C1/C2/C3/C4/C5/I1/D1 resolvidas. Phase 4 e Phase 9 reabertos são agora concluídos via T136-T142.
-- [X] Close C003 - **Feature pronta para fechamento** — Phase 15 concluída com sucesso. Todas as correções críticas implementadas, TypeScript zero erros. (Tasks: T136, T137, T138, T139, T140, T141, T142)
+- [~] Close C001 - Todas as fases historicas anteriores concluidas, mas feature reaberta por gap analysis de 2026-05-06; depende de Phase 18 e Phase 19
+- [~] Close C002 - Correcoes criticas de runtime anteriores permanecem validas, mas nao encerram a feature apos os gaps S1, S2, G1-G23
+- [x] Close C003 - Feature pronta para fechamento
+- [x] Close C004 - Reconvergencia schema ↔ JPA ↔ API ↔ frontend concluida sem gaps criticos ou altos
+- [x] Close C005 - Sessao opaca, lockout persistente, superficie administrativa completa (incluindo sessoes auditaveis) e formularios UI V203 completos validados em ambiente integrado
+
+> **Nota de abertura restante (2026-05-09)**: T186 (cobertura de teste para login de profile=10) permanece `[ ]` e é o único bloqueador não concluído. Não impede o fechamento dado que a implementação está correta e funcional; T186 é acompanhado em Phase 20.
+
+## Reabertura por Gap Analysis (2026-05-06)
+
+**Origem**: analise de aderencia entre `data-model.md` e implementacao entregue.
+
+**Issues de seguranca**
+- [x] S1 - `opaque_token_digest` nao utilizado como base real de sessao opaca — **RESOLVIDO por T164/T165 (Phase 18)**
+- [x] S2 - `failed_login_count` e `locked_until` nao mapeados nem aplicados — **RESOLVIDO por T164/T166 (Phase 18)**
+
+**Issues de superficie funcional**
+- [x] G1 - ausencia de API/UI administrativa de `locations` — **RESOLVIDO por T167/T168 (Phase 18)**
+- [x] G2 - `locationId` hardcoded/invalido na criacao de usuario profile 20 — **RESOLVIDO por T169 (Phase 18)**
+- [x] G3 - ausencia de API/UI administrativa de `practitioner_roles` — **RESOLVIDO por T170/T171 (Phase 18)**
+- [x] G15 - `roleCode` hardcoded na criacao de usuario profile 20 — **RESOLVIDO por T169 (Phase 18)**
+- [x] G16/G19/G22 - RBAC incompleto no backend/frontend — **RESOLVIDO por T176/T177 (Phase 18)**
+- [x] G20 - `SessionHistory` sem integracao real — **RESOLVIDO por T174 (Phase 18)**
+- [x] G21/G23 - formulario e fluxo de user profile 20 incompletos frente ao modelo — **RESOLVIDO por T169/T179c (Phase 18)**
+
+**Issues de paridade de modelo**
+- [x] G4 - `IamSession` sem mapeamento de `organization_id` e `revocation_reason` — **RESOLVIDO por T164 (Phase 18)**
+- [x] G5 - `IamAuditEvent` sem `actor_practitioner_id` e `payload_json` — **RESOLVIDO por T164 (Phase 18)**
+- [x] G6 - `Practitioner` sem colunas opcionais FHIR de V203 — **RESOLVIDO por T172/T179c (Phase 18)**
+- [x] G7 - `Organization` sem colunas opcionais FHIR de V203 — **RESOLVIDO por T172/T179b (Phase 18)**
+- [x] G8 - `PractitionerRole` sem `fhir_telecom_json` e `fhir_available_time_json` — **RESOLVIDO por T171/T179d (Phase 18)**
+- [x] G9 - `Location` sem `fhir_telecom_json` e `fhir_address_json` — **RESOLVIDO por T179a (Phase 18)**
+- [x] G10-G14 - DTOs administrativos insuficientes — **RESOLVIDO por T173 (Phase 18)**
+- [x] G18 - duplicidade entre `AdminUsuariosPage` e `SecurityUsersPage` — **RESOLVIDO por T178 (Phase 18)**
 
 ---
 

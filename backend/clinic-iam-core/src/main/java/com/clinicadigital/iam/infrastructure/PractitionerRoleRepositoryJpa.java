@@ -17,6 +17,27 @@ class PractitionerRoleRepositoryJpa implements PractitionerRoleRepository {
     private EntityManager entityManager;
 
     @Override
+    public List<PractitionerRole> findByTenantId(UUID tenantId) {
+        return entityManager.createQuery(
+                        "SELECT r FROM PractitionerRole r WHERE r.tenantId = :tenantId ORDER BY r.updatedAt DESC",
+                        PractitionerRole.class)
+                .setParameter("tenantId", tenantId)
+                .getResultList();
+    }
+
+    @Override
+    public Optional<PractitionerRole> findByIdAndTenantId(UUID id, UUID tenantId) {
+        return entityManager.createQuery(
+                        "SELECT r FROM PractitionerRole r WHERE r.id = :id AND r.tenantId = :tenantId",
+                        PractitionerRole.class)
+                .setParameter("id", id)
+                .setParameter("tenantId", tenantId)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public List<PractitionerRole> findActiveByPractitionerId(UUID practitionerId) {
         return entityManager.createQuery(
                         "SELECT r FROM PractitionerRole r WHERE r.practitionerId = :practitionerId AND r.active = true",

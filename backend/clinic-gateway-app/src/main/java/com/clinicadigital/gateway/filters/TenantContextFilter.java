@@ -41,7 +41,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
      * com.clinicadigital.iam.application.SessionManager#validateSession} — since
      * super-user sessions are stored with {@code tenantId = null}.
      */
-    static final UUID SYSTEM_TENANT_ID =
+    public static final UUID SYSTEM_TENANT_ID =
             UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     private final ObjectProvider<TenantContextHolder> tenantContextHolderProvider;

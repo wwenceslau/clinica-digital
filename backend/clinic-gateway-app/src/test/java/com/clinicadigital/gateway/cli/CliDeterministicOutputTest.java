@@ -1,10 +1,18 @@
 package com.clinicadigital.gateway.cli;
 
+import com.clinicadigital.iam.domain.IamUser;
+import com.clinicadigital.iam.domain.IamUserRepository;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * T112 [US8] Deterministic logs and exit codes for CLI commands.
@@ -31,14 +39,31 @@ class CliDeterministicOutputTest {
 
     @Test
     void loginCommandReturnsOperationOutcomeOnNullServiceCallWithoutThrowing() {
+        IamUserRepository userRepository = mock(IamUserRepository.class);
+        when(userRepository.save(any(IamUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
         // Arrange: create command with a null AuthenticationService to trigger immediate exception
         // The command constructor accepts null (Spring does not inject here — unit test only)
-        LoginCommand command = new LoginCommand(null, new com.clinicadigital.gateway.security.LoginLockoutService(), new CliSessionStore());
+        LoginCommand command = new LoginCommand(
+                null,
+                new com.clinicadigital.gateway.security.LoginLockoutService(userRepository),
+                new CliSessionStore());
 
         // Act: invoke with a locked-out email to trigger loginLockoutService path
         // Register 5 failures to trigger lockout
         com.clinicadigital.gateway.security.LoginLockoutService lockout =
-                new com.clinicadigital.gateway.security.LoginLockoutService();
+                new com.clinicadigital.gateway.security.LoginLockoutService(userRepository);
+        IamUser lockedUser = new IamUser(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "locked@example.com",
+                "locked@example.com",
+                "hash",
+                "bcrypt",
+                true,
+                20,
+                null);
+        when(userRepository.findByEmail("locked@example.com")).thenReturn(List.of(lockedUser));
         LoginCommand lockedCommand = new LoginCommand(null, lockout, new CliSessionStore());
         for (int i = 0; i < 5; i++) {
             lockout.registerFailure("locked@example.com");

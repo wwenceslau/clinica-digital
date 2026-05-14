@@ -4,6 +4,9 @@ import com.clinicadigital.iam.domain.IIamSessionRepository;
 import com.clinicadigital.iam.domain.IamSession;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -38,15 +41,19 @@ public class SessionManager {
         // tenantId is nullable: super-user (profile 0) sessions are not tenant-scoped
 
         Instant now = Instant.now();
+        UUID opaqueToken = UUID.randomUUID();
         IamSession session = new IamSession(
                 UUID.randomUUID(),
                 tenantId,
+            tenantId,
                 userId,
                 now,
                 now.plusSeconds(DEFAULT_SESSION_TTL_SECONDS),
                 null,
-                traceId
+            traceId,
+            sha256Hex(opaqueToken.toString())
         );
+        session.setOpaqueToken(opaqueToken);
         return repository.save(session);
     }
 
@@ -58,12 +65,17 @@ public class SessionManager {
     public boolean validateSession(UUID sessionId, UUID tenantId) {
         requireNonNull(sessionId, "sessionId");
         // tenantId is nullable: super-user sessions have no tenant scope
-        return repository.findById(sessionId)
+        String digest = sha256Hex(sessionId.toString());
+        return repository.findByOpaqueTokenDigest(digest)
                 .map(session -> {
                     boolean tenantMatch = tenantId == null
                             ? session.tenantId() == null
                             : tenantId.equals(session.tenantId());
-                    return tenantMatch && session.isActive();
+                // Defensive constant-time compare avoids digest oracle timing variance.
+                boolean digestMatch = MessageDigest.isEqual(
+                    session.opaqueTokenDigest().getBytes(StandardCharsets.UTF_8),
+                    digest.getBytes(StandardCharsets.UTF_8));
+                return digestMatch && tenantMatch && session.isActive();
                 })
                 .orElse(false);
     }
@@ -77,7 +89,7 @@ public class SessionManager {
     public void revokeSession(UUID sessionId, UUID tenantId) {
         requireNonNull(sessionId, "sessionId");
         // tenantId is nullable: super-user sessions have no tenant scope
-        repository.revoke(sessionId, tenantId);
+        repository.revokeByOpaqueTokenDigest(sha256Hex(sessionId.toString()), tenantId, "logout");
     }
 
     /**
@@ -85,8 +97,22 @@ public class SessionManager {
      */
     public IamSession findRequiredSession(UUID sessionId) {
         requireNonNull(sessionId, "sessionId");
-        return repository.findById(sessionId)
+        return repository.findByOpaqueTokenDigest(sha256Hex(sessionId.toString()))
                 .orElseThrow(() -> new IllegalArgumentException("session not found: " + sessionId));
+    }
+
+    private static String sha256Hex(String input) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 
     private static void requireNonNull(Object value, String fieldName) {

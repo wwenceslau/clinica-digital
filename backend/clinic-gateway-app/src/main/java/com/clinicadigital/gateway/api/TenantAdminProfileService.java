@@ -379,4 +379,69 @@ public class TenantAdminProfileService {
             String email,
             String cpf) {
     }
+
+    public record OrgFhirFields(
+            String fhirTypeJson,
+            String fhirAliasJson,
+            String fhirTelecomJson,
+            String fhirAddressJson,
+            String fhirPartOfOrgId,
+            String fhirEndpointRefsJson) {
+    }
+
+    public OrgFhirFields getOrgFhirFields(UUID tenantId) {
+        return jdbcTemplate.query(
+                """
+                SELECT fhir_type_json, fhir_alias_json, fhir_telecom_json,
+                       fhir_address_json, fhir_part_of_org_id, fhir_endpoint_refs_json
+                FROM organizations
+                WHERE tenant_id = ?
+                ORDER BY created_at ASC
+                LIMIT 1
+                """,
+                rs -> {
+                    if (!rs.next()) return new OrgFhirFields(null, null, null, null, null, null);
+                    return new OrgFhirFields(
+                            rs.getString("fhir_type_json"),
+                            rs.getString("fhir_alias_json"),
+                            rs.getString("fhir_telecom_json"),
+                            rs.getString("fhir_address_json"),
+                            rs.getString("fhir_part_of_org_id"),
+                            rs.getString("fhir_endpoint_refs_json"));
+                },
+                tenantId);
+    }
+
+    @Transactional
+    public void updateOrgFhirFields(UUID tenantId, OrgFhirFields extras) {
+        if (extras == null) return;
+        jdbcTemplate.update(con -> {
+            var ps = con.prepareStatement(
+                    """
+                    UPDATE organizations
+                    SET fhir_type_json          = CASE WHEN ? IS NOT NULL THEN CAST(? AS jsonb) ELSE fhir_type_json END,
+                        fhir_alias_json         = CASE WHEN ? IS NOT NULL THEN CAST(? AS jsonb) ELSE fhir_alias_json END,
+                        fhir_telecom_json       = CASE WHEN ? IS NOT NULL THEN CAST(? AS jsonb) ELSE fhir_telecom_json END,
+                        fhir_address_json       = CASE WHEN ? IS NOT NULL THEN CAST(? AS jsonb) ELSE fhir_address_json END,
+                        fhir_part_of_org_id     = CASE WHEN ? IS NOT NULL THEN ?::uuid ELSE fhir_part_of_org_id END,
+                        fhir_endpoint_refs_json = CASE WHEN ? IS NOT NULL THEN CAST(? AS jsonb) ELSE fhir_endpoint_refs_json END,
+                        updated_at              = NOW()
+                    WHERE tenant_id = ?
+                    """);
+            ps.setString(1,  extras.fhirTypeJson());
+            ps.setString(2,  extras.fhirTypeJson());
+            ps.setString(3,  extras.fhirAliasJson());
+            ps.setString(4,  extras.fhirAliasJson());
+            ps.setString(5,  extras.fhirTelecomJson());
+            ps.setString(6,  extras.fhirTelecomJson());
+            ps.setString(7,  extras.fhirAddressJson());
+            ps.setString(8,  extras.fhirAddressJson());
+            ps.setString(9,  extras.fhirPartOfOrgId());
+            ps.setString(10, extras.fhirPartOfOrgId());
+            ps.setString(11, extras.fhirEndpointRefsJson());
+            ps.setString(12, extras.fhirEndpointRefsJson());
+            ps.setObject(13, tenantId);
+            return ps;
+        });
+    }
 }

@@ -3,6 +3,7 @@ package com.clinicadigital.iam.infrastructure;
 import com.clinicadigital.iam.domain.IamGroup;
 import com.clinicadigital.iam.domain.IamGroupRepository;
 import com.clinicadigital.iam.domain.IamPermission;
+import com.clinicadigital.iam.domain.IamUser;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -82,6 +83,16 @@ class IamGroupRepositoryJpa implements IamGroupRepository {
 
     @Override
     @Transactional
+    public void removePermission(UUID groupId, UUID permissionId) {
+        entityManager.createNativeQuery(
+                        "DELETE FROM iam_group_permissions WHERE group_id = ? AND permission_id = ?")
+                .setParameter(1, groupId)
+                .setParameter(2, permissionId)
+                .executeUpdate();
+    }
+
+    @Override
+    @Transactional
     public void assignUser(UUID userId, UUID groupId, UUID assignedBy) {
         entityManager.createNativeQuery(
                         "INSERT INTO iam_user_groups (iam_user_id, group_id, assigned_at, assigned_by_user_id) " +
@@ -90,6 +101,16 @@ class IamGroupRepositoryJpa implements IamGroupRepository {
                 .setParameter(2, groupId)
                 .setParameter(3, Instant.now())
                 .setParameter(4, assignedBy)
+                .executeUpdate();
+    }
+
+    @Override
+    @Transactional
+    public void removeUser(UUID userId, UUID groupId) {
+        entityManager.createNativeQuery(
+                        "DELETE FROM iam_user_groups WHERE iam_user_id = ? AND group_id = ?")
+                .setParameter(1, userId)
+                .setParameter(2, groupId)
                 .executeUpdate();
     }
 
@@ -117,4 +138,34 @@ class IamGroupRepositoryJpa implements IamGroupRepository {
                 .setParameter("userId", userId)
                 .getResultList();
     }
+
+            @Override
+            public List<IamUser> findUsersByGroupId(UUID groupId) {
+            return entityManager.createQuery(
+                    "SELECT u FROM IamUser u " +
+                    "WHERE u.id IN (" +
+                    "  SELECT ug.userId FROM IamUserGroup ug WHERE ug.groupId = :groupId" +
+                    ") ORDER BY u.createdAt",
+                    IamUser.class)
+                .setParameter("groupId", groupId)
+                .getResultList();
+            }
+
+            @Override
+            @Transactional
+            public boolean deleteByIdAndTenantId(UUID groupId, UUID tenantId) {
+            entityManager.createNativeQuery("DELETE FROM iam_user_groups WHERE group_id = ?")
+                .setParameter(1, groupId)
+                .executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM iam_group_permissions WHERE group_id = ?")
+                .setParameter(1, groupId)
+                .executeUpdate();
+
+            int deletedGroups = entityManager.createNativeQuery(
+                    "DELETE FROM iam_groups WHERE id = ? AND tenant_id = ?")
+                .setParameter(1, groupId)
+                .setParameter(2, tenantId)
+                .executeUpdate();
+            return deletedGroups > 0;
+            }
 }

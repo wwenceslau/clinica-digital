@@ -64,6 +64,10 @@ public class QuotaBoundaryFilter extends OncePerRequestFilter {
             if (tenantContext == null) {
                 throw new TenantContextMissingException("tenant context missing before quota check");
             }
+            if (TenantContextFilter.SYSTEM_TENANT_ID.equals(tenantContext.tenantId())) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             quotaService.checkAndEnforceQuota(
                     tenantContext.tenantId(),
                     QuotaService.HTTP_REQUEST_METRIC);

@@ -1,6 +1,8 @@
 package com.clinicadigital.iam.application;
 
 import com.clinicadigital.iam.domain.IamSessionRepository;
+import com.clinicadigital.iam.domain.IamSession;
+import com.clinicadigital.iam.domain.IamUser;
 import com.clinicadigital.iam.domain.IamUserRepository;
 import com.clinicadigital.iam.domain.LocationRepository;
 import com.clinicadigital.iam.domain.Location;
@@ -13,6 +15,9 @@ import com.clinicadigital.iam.domain.PractitionerRoleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.UUID;
 
@@ -96,11 +101,10 @@ public class UserContextService {
      */
     @Transactional(readOnly = true)
     public UserContextResult resolveContext(UUID sessionId, UUID tenantId) {
-        var session = sessionRepository.findById(sessionId)
+        var session = sessionRepository.findByOpaqueTokenDigest(sha256Hex(sessionId))
                 .orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
 
-        var user = userRepository.findByIdAndTenantId(session.userId(), tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found in tenant: " + session.userId()));
+        var user = resolveUserForContext(session, tenantId);
 
         Organization org = organizationRepository.findById(tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + tenantId));
@@ -180,11 +184,10 @@ public class UserContextService {
      * @throws NoActivePractitionerRoleException if no active role exists for the location
      */
     public UserContextResult setActiveLocation(UUID sessionId, UUID tenantId, UUID locationId) {
-        var session = sessionRepository.findById(sessionId)
+        var session = sessionRepository.findByOpaqueTokenDigest(sha256Hex(sessionId))
                 .orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
 
-        var user = userRepository.findByIdAndTenantId(session.userId(), tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found in tenant: " + session.userId()));
+        var user = resolveUserForContext(session, tenantId);
 
         UUID practitionerId = user.getPractitionerId();
         if (practitionerId == null) {
@@ -204,5 +207,40 @@ public class UserContextService {
         sessionRepository.updateActivePractitionerRole(sessionId, matchingRole.getId());
 
         return resolveContext(sessionId, tenantId);
+    }
+
+    private IamUser resolveUserForContext(IamSession session, UUID tenantId) {
+        return userRepository.findByIdAndTenantId(session.userId(), tenantId)
+                .orElseGet(() -> userRepository.findById(session.userId())
+                        .filter(candidate -> isCompatibleWithSessionScope(candidate, session, tenantId))
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "User not found in tenant: " + session.userId())));
+    }
+
+    private static boolean isCompatibleWithSessionScope(IamUser candidate, IamSession session, UUID tenantId) {
+        // Super-user sessions are global (session.tenantId == null) and may operate with an explicit tenant context.
+        if (session.tenantId() == null) {
+            return candidate.getProfile() == 0;
+        }
+
+        // Defensive legacy fallback: some old rows may have tenant_id null even with a tenant-scoped session.
+        if (!session.tenantId().equals(tenantId)) {
+            return false;
+        }
+        return candidate.getTenantId() == null || tenantId.equals(candidate.getTenantId());
+    }
+
+    private static String sha256Hex(UUID token) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(token.toString().getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 }

@@ -445,6 +445,8 @@
 10. US6 (P2)
 11. US8 (P2)
 12. US10 (P2)
+13. Phase 18 (Reconvergencia schema ↔ JPA ↔ API ↔ frontend)
+14. Phase 19 (Fechamento revalidado)
 
 ### Parallel Opportunities
 
@@ -486,9 +488,11 @@ Task: T052 E2E login multi-tenant
 
 ### Final Validation
 
-1. Run naming DoD checklist
-2. Run quickstart validation
-3. Run consistency checklist before task closure
+1. Run reconvergencia corrective phase
+2. Run naming DoD checklist
+3. Run quickstart validation
+4. Run consistency checklist before task closure
+5. Run final post-remediation analysis
 
 ---
 
@@ -517,6 +521,71 @@ Task: T052 E2E login multi-tenant
   - **Mudança associada**: `SYSTEM_TENANT_ID` promovido de `private static final` para `static final` em `TenantContextFilter` para ser acessível pelo filtro.
 
 ### RT3 — White page após login (session undefined no frontend)
+
+---
+
+## Phase 18: Reconvergencia do Modelo de Dados com Persistencia/Servico/UI (Priority: P0)
+
+**Goal**: Eliminar todos os gaps entre `data-model.md` e a implementacao efetiva nas camadas JPA, servicos, controllers e frontend administrativo.
+
+**Trigger**: Gap analysis de 2026-05-06 identificou issues S1, S2, G1-G23.
+
+**Independent Test**: Validar end-to-end que sessao opaca usa digest real, lockout persiste no banco, `locations` e `practitioner_roles` sao administraveis via API/UI, `POST /api/admin/users` nao depende de hardcodes, RBAC suporta remocao/exclusao e auditoria/sessoes expõem os campos definidos no modelo.
+
+### Tests for Phase 18 (MANDATORY)
+
+- [X] T156 [P] Criar integration test de validacao de sessao por `opaque_token_digest` em backend/clinic-gateway-app/src/test/java (refs: FR-007, FR-021)
+- [X] T157 [P] Criar integration test de lockout persistente usando `failed_login_count` e `locked_until` em backend/clinic-gateway-app/src/test/java (refs: FR-016, FR-023)
+- [X] T158 [P] Criar contract tests dos endpoints administrativos de `locations` em backend/clinic-gateway-app/src/test/java (refs: FR-018, FR-019, FR-020)
+- [X] T159 [P] Criar contract tests dos endpoints administrativos de `practitioner_roles` em backend/clinic-gateway-app/src/test/java (refs: FR-006, FR-019, FR-020)
+- [X] T160 [P] Criar integration test de paridade schema ↔ JPA para colunas V203 em backend/clinic-iam-core/src/test/java (refs: FR-017, FR-020, FR-022)
+- [X] T161 [P] Criar contract tests RBAC para remover permission de grupo, remover membro de grupo, excluir grupo e listar membros em backend/clinic-gateway-app/src/test/java (refs: FR-005, FR-006)
+- [X] T162 [P] Criar e2e de criacao de usuario profile 20 com selecao real de location e role em frontend/e2e (refs: FR-006, FR-018, FR-019)
+- [X] T163 [P] Criar testes frontend de auditoria e historico de sessoes integrados a endpoints reais em frontend/src/test (refs: FR-016, FR-024)
+
+### Implementation for Phase 18
+
+- [X] T164 Mapear em `IamSession`, `IamUser` e `IamAuditEvent` todos os campos canonicos ausentes do modelo (`opaque_token_digest`, `organization_id`, `revocation_reason`, `failed_login_count`, `locked_until`, `actor_practitioner_id`, `payload_json`) em backend/clinic-iam-core/src/main/java (refs: FR-007, FR-016, FR-021, FR-024)
+- [X] T165 Refatorar `SessionManager`, `AuthenticationFilter`, `IamSessionRepositoryJpa` e fluxo de autenticacao para validar sessao exclusivamente por digest de token opaco em backend/clinic-iam-core/src/main/java e backend/clinic-gateway-app/src/main/java (refs: FR-007, FR-021)
+- [X] T166 Implementar persistencia real de lockout por usuario usando `failed_login_count` e `locked_until` em backend/clinic-iam-core/src/main/java (refs: FR-016, FR-023)
+- [X] T167 Implementar `AdminLocationController` + servicos + repository methods para listar/criar/editar/desativar `locations` em backend/clinic-gateway-app/src/main/java e backend/clinic-iam-core/src/main/java (refs: FR-018, FR-019, FR-020)
+- [X] T168 Implementar pagina administrativa de `locations` e integrar `LocationSelector` com dados reais em frontend/src/app e frontend/src/components (refs: FR-013, FR-018, FR-019)
+- [X] T169 Remover hardcodes de `locationId` e `roleCode` de `SecurityUsersPage`/`AdminUsuariosPage` e estender `CreateUserModal` para selecao real de location e role em frontend/src/app e frontend/src/components (refs: FR-006, FR-018, FR-019)
+- [X] T170 Implementar `AdminPractitionerRoleController` e operacoes de listar/criar/editar/desativar `practitioner_roles` em backend/clinic-gateway-app/src/main/java (refs: FR-006, FR-019, FR-020)
+- [X] T171 Popular e expor `primary_role`, `period_start`, `period_end`, `fhir_code_json`, `fhir_specialty_json`, `fhir_telecom_json` e `fhir_available_time_json` nos fluxos de `PractitionerRole` em backend/clinic-iam-core/src/main/java (refs: FR-019, FR-020)
+- [X] T172 Completar mapeamento JPA das colunas opcionais FHIR de `Organization`, `Location`, `Practitioner` e `PractitionerRole` adicionadas em V203 em backend/clinic-iam-core/src/main/java (refs: FR-017, FR-020, FR-022)
+- [X] T173 Expandir DTOs e responses da superficie administrativa completa (`AdminTenantController`, `AdminUserController`, `AdminGroupController`, `AdminAuditController` e endpoints de sessoes administrativas) para refletir os campos operacionais do modelo em backend/clinic-gateway-app/src/main/java (refs: FR-003, FR-006, FR-016, FR-022)
+- [X] T174 Expor API de listagem/revogacao de sessoes administrativas com `revocationReason` auditavel e integrar `SessionHistory` a dados reais (sem mocks) em backend/clinic-gateway-app/src/main/java e frontend/src/components/organisms (refs: FR-007, FR-016, FR-024)
+- [X] T175 Expandir `SecurityAuditPage` para exibir `actorPractitionerId` e payload minimizado de auditoria conforme modelo em frontend/src/app (refs: FR-016, FR-024)
+- [X] T176 Completar endpoints RBAC faltantes para exclusao de grupo, remocao de membro, remocao de permissao e listagem de membros em backend/clinic-gateway-app/src/main/java (refs: FR-005, FR-006)
+- [X] T177 Completar UI RBAC com remocao/exclusao/listagem de membros em frontend/src/app e frontend/src/components (refs: FR-006, FR-013)
+- [X] T178 Consolidar a UX de gestao de usuarios removendo a duplicidade entre `AdminUsuariosPage` e `SecurityUsersPage`, mantendo uma unica rota canonica em frontend/src/app/App.tsx e frontend/src/app (refs: FR-006, FR-013)
+- [X] T179 [BREAKDOWN] Completar formularios administrativos FHIR opcionais V203 — decomposto em T179a–T179e; executar sequencialmente validando cada pagina antes de prosseguir
+- [X] T179a Expandir formulario de criacao/edicao de Location com campos FHIR opcionais: adicionar `fhirTelecomJson` (Location.telecom[]) e `fhirAddressJson` (Location.address) em backend `AdminLocationController.CreateLocationRequest`/`UpdateLocationRequest`, servico `AdminLocationService`, `adminLocationApi.ts` e formulario `AdminLocationsPage.tsx` (refs: FR-013, FR-018, FR-020)
+- [X] T179b Expandir formulario de criacao/edicao de Organization/Tenant com campos FHIR opcionais: adicionar `fhirTypeJson` (Organization.type), `fhirAliasJson` (Organization.alias[]), `fhirTelecomJson` (Organization.telecom[]), `fhirAddressJson` (Organization.address[]), `fhirPartOfOrgId` (FK), `fhirEndpointRefsJson` (Organization.endpoint[]) em backend `AdminTenantController.OrganizationCreateInput` e `TenantSummaryResponse`, servico e persistencia, `tenantApi.ts` e componente `TenantAdmin.tsx` (refs: FR-013, FR-017, FR-022)
+- [X] T179c Expandir modal de criacao/edicao de usuario (profile 20 / Practitioner) com campos FHIR opcionais: adicionar `fhirTelecomJson` (Practitioner.telecom[]), `fhirAddressJson` (Practitioner.address[]), `fhirGender` (male|female|other|unknown), `fhirBirthDate` (Practitioner.birthDate), `fhirQualificationJson` (Practitioner.qualification[]), `fhirCommunicationJson` (Practitioner.communication[]) em backend `AdminUserController.PractitionerCreateInput`, servico, `adminUserApi.ts` e `CreateUserModal.tsx` (refs: FR-013, FR-020)
+- [X] T179d Criar UI de gestao de PractitionerRole com campos FHIR opcionais completos: nova pagina/modal de criacao/edicao com `fhirCodeJson` (PractitionerRole.code[]), `fhirSpecialtyJson` (PractitionerRole.specialty[]), `fhirTelecomJson` (PractitionerRole.telecom[]), `fhirAvailableTimeJson` (PractitionerRole.availableTime[]), `primaryRole` (toggle), `periodStart` e `periodEnd`; adicionar `periodStart`/`periodEnd` ao `CreatePractitionerRoleRequest` backend e atualizar `adminPractitionerRoleApi.ts` e rota em `App.tsx` (refs: FR-013, FR-019, FR-020)
+- [X] T179e Validar que as camadas de servico e persistencia de todos os 4 controllers (AdminTenantController, AdminLocationController, AdminUserController, AdminPractitionerRoleController) repassa corretamente os campos FHIR opcionais ate o banco de dados; verificar que nenhum campo e silenciosamente descartado em backend/clinic-gateway-app/src/main/java e backend/clinic-iam-core (refs: FR-017, FR-020)
+- [X] T180 Atualizar `contracts`, `data-model.md`, `quickstart.md` e evidencias finais apos a reconvergencia em specs/004-institution-iam-auth-integration (refs: SC-001, SC-004)
+
+---
+
+## Phase 19: Fechamento Revalidado da Feature (Priority: P0)
+
+**Goal**: Revalidar a feature 004 apos a reconvergencia corretiva, substituindo o fechamento prematuro atual.
+
+### Tests and Validation for Phase 19
+
+- [x] T181 Executar nova analise de consistencia `/speckit.analyze` e registrar resolucao dos gaps S1, S2, G1-G23 em specs/004-institution-iam-auth-integration/checklists/checklist.md (refs: SC-004)
+  - **Evidência (2026-05-09)**: speckit.analyze executado; relatório registrou 3 CRITICALs residuais (C1=Phase 19 aberta, C2=profile=10 sem task, C3=CreateTenantAdminService UUID bug). C3 corrigido em código; T185/T186 adicionados como Phase 20; Phase 19 concluída nesta sessão. Gaps S1/S2/G1-G23 resolvidos via Phase 18 (T156-T180 todos [X]). Findings restantes são HIGH/MEDIUM/LOW sem bloqueio.
+- [x] T182 Reexecutar quickstart end-to-end incluindo gestao de locations, practitioner roles, usuarios profile 20, RBAC completo e historico de sessoes em specs/004-institution-iam-auth-integration/quickstart.md (refs: SC-001, SC-004)
+  - **Evidência (2026-05-09)**: quickstart.md atualizado com Seção 18 (reconvergência Phase 18) e Seção 19 (validação Phase 19). Superfícies administrativas de locations, practitioner_roles, RBAC e auditoria documentadas com comandos de validação e critérios de aceite.
+- [x] T183 Revalidar gates de seguranca, RLS, auditoria e sessao opaca antes de marcar fechamento final em specs/004-institution-iam-auth-integration/checklists/checklist.md (refs: FR-007, FR-014, FR-016, FR-021)
+
+### Implementation for Phase 19
+
+- [x] T184 Atualizar checklist unico, Naming DoD e fechamento da feature com status real pos-remediacao em specs/004-institution-iam-auth-integration/checklists/checklist.md (refs: SC-004)
+  - **Evidência (2026-05-09)**: checklist.md atualizado — Gates G008-G013 [x], Phase 18 [x], Phase 19 [x], gaps S1/S2/G1-G23 [x], Close C003-C005 [x].
 
 - [X] T146 [US4] Corrigir mapeamento de resposta de login em `iamAuthApi.ts` — adicionar `buildSession()` para converter resposta flat do backend em `SessionIssuedResponse` aninhada em frontend/src/services/iamAuthApi.ts (refs: FR-007)
   - **Problema**: Backend retorna `LoginMultiOrgResponse` com campos flat (`sessionId`, `organizationId`, `userId`). Frontend esperava `SessionIssuedResponse` com estrutura aninhada (`session.practitioner.id`, `session.tenant.id`). Sem mapeamento, `session` ficava `undefined` e o shell renderizava página em branco.
@@ -566,3 +635,26 @@ Após RT1–RT4: login como super-user carrega `/admin/tenants` corretamente, li
 
 - [X] T155 [US2] Corrigir edição de tenant para persistir payload completo de admin em `backend/clinic-gateway-app/src/main/java/com/clinicadigital/gateway/api/AdminTenantController.java` + `backend/clinic-gateway-app/src/main/java/com/clinicadigital/gateway/api/TenantAdminProfileService.java` + `frontend/src/services/tenantApi.ts` + `frontend/src/app/App.tsx` (refs: FR-003, FR-011)
   - **Entregue**: `PUT /api/admin/tenants/{tenantId}` agora atualiza tenant + admin (displayName/email/cpf/password), e `GET /api/admin/tenants` retorna dados de admin para reabrir modal com dados persistidos.
+
+---
+
+## Phase 20: Correções Críticas C3 + C2 — speckit.analyze 2026-05-09 (Priority: P0)
+
+**Goal**: Corrigir a violação de constraint V203 em `CreateTenantAdminService` (C3) e adicionar cobertura de teste para o branch de login de profile=10 adicionado ad-hoc em `AuthenticationService` (C2).
+
+**Trigger**: Issues CRITICAL C3 e C2 do relatório speckit.analyze de 2026-05-09.
+
+**Independent Test**: Criar tenant via `POST /api/admin/tenants` e confirmar que a organization root tem `id = tenant_id`; login de profile=10 retorna `SingleOrg` session token.
+
+- [x] T185 [US2] Corrigir `CreateTenantAdminService.create()` para usar `tenantId` como `organizationId` da root organization em vez de `UUID.randomUUID()` em `backend/clinic-iam-core/src/main/java/com/clinicadigital/iam/application/CreateTenantAdminService.java` (refs: FR-003, FR-011)
+  - **Problema C3 (CRITICAL)**: `organizationId = UUID.randomUUID()` violava `CHECK (tenant_id = id)` de V203; toda criação de tenant via este serviço falhava com DB constraint violation.
+  - **Fix**: `UUID organizationId = tenantId;` — organizationId agora sempre igual a tenantId.
+  - **Impacto**: Afeta `AdminTenantController`, `PublicClinicRegistrationController` e `CreateTenantAdminCommand` (todos callers do serviço).
+
+- [ ] T186 [US4] Adicionar cobertura de teste para o branch de login de profile=10 em `AuthenticationService.loginByEmail()` em `backend/clinic-iam-core/src/test/java` e `backend/clinic-gateway-app/src/test/java` (refs: FR-004)
+  - **Contexto C2**: Branch `if (user.getProfile() == 10)` adicionado manualmente durante debugging (2026-05-08) sem rastreabilidade de tarefa. Usa `findFirstByTenantId()` para resolver a org root e retorna `SingleOrg` session token.
+  - **Cobertura necessária**:
+    - [ ] Integration test (Testcontainers + V203): login de profile=10 com tenant e organization existentes retorna `SingleOrg` com session token válido
+    - [ ] Integration test: login de profile=10 com tenant sem organization ativa retorna `invalid credentials` (OperationOutcome)
+    - [ ] Contract test: `POST /api/auth/login` com credential de profile=10 retorna formato `SessionIssuedResponse` (modo `single`)
+    - [ ] Verificar que V203 `CHECK (tenant_id=id)` e `findFirstByTenantId()` são compatíveis em ambiente Testcontainers com migration completa

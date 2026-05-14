@@ -17,6 +17,25 @@ class IamUserRepositoryJpa implements IamUserRepository {
     private EntityManager entityManager;
 
     @Override
+    public List<IamUser> findAll() {
+        return entityManager.createQuery(
+                        "SELECT u FROM IamUser u ORDER BY u.createdAt ASC",
+                        IamUser.class)
+                .getResultList();
+    }
+
+    @Override
+    public Optional<IamUser> findById(UUID id) {
+        return entityManager.createQuery(
+                        "SELECT u FROM IamUser u WHERE u.id = :id",
+                        IamUser.class)
+                .setParameter("id", id)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public Optional<IamUser> findByIdAndTenantId(UUID id, UUID tenantId) {
         return entityManager.createQuery(
                         "SELECT u FROM IamUser u WHERE u.id = :id AND u.tenantId = :tenantId",
@@ -100,5 +119,13 @@ class IamUserRepositoryJpa implements IamUserRepository {
                         IamUser.class)
                 .setParameter("tenantId", tenantId)
                 .getResultList();
+    }
+
+    @Override
+    public void delete(UUID id) {
+        IamUser user = entityManager.find(IamUser.class, id);
+        if (user != null) {
+            entityManager.remove(user);
+        }
     }
 }

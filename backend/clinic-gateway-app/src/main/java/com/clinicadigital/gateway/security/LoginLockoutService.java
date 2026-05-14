@@ -1,12 +1,16 @@
 package com.clinicadigital.gateway.security;
 
+import com.clinicadigital.iam.domain.IamUser;
+import com.clinicadigital.iam.domain.IamUserRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class LoginLockoutService {
@@ -15,30 +19,38 @@ public class LoginLockoutService {
     private static final Duration WINDOW = Duration.ofMinutes(15);
     private static final Duration LOCKOUT = Duration.ofMinutes(15);
 
-    private final Map<String, AttemptWindow> attempts = new ConcurrentHashMap<>();
+    private final IamUserRepository iamUserRepository;
+
+    public LoginLockoutService(IamUserRepository iamUserRepository) {
+        this.iamUserRepository = iamUserRepository;
+    }
 
     public void assertNotLocked(String tenantScopedLogin) {
-        AttemptWindow window = attempts.get(key(tenantScopedLogin));
-        if (window == null) {
-            return;
-        }
-        window.resetWindowIfElapsed();
-        if (window.lockedUntil != null && window.lockedUntil.isAfter(Instant.now())) {
-            throw new IllegalArgumentException("too many login attempts; locked for 15 minutes");
+        Instant now = Instant.now();
+        for (IamUser user : resolveUsers(tenantScopedLogin)) {
+            resetWindowIfElapsed(user, now);
+            if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
+                throw new IllegalArgumentException("too many login attempts; locked for 15 minutes");
+            }
         }
     }
 
+    @Transactional
     public void registerFailure(String tenantScopedLogin) {
-        AttemptWindow window = attempts.computeIfAbsent(key(tenantScopedLogin), ignored -> new AttemptWindow());
-        window.resetWindowIfElapsed();
-        window.failures++;
-        if (window.failures >= MAX_ATTEMPTS) {
-            window.lockedUntil = Instant.now().plus(LOCKOUT);
+        Instant now = Instant.now();
+        for (IamUser user : resolveUsers(tenantScopedLogin)) {
+            resetWindowIfElapsed(user, now);
+            user.registerLoginFailure(MAX_ATTEMPTS, now.plus(LOCKOUT));
+            iamUserRepository.save(user);
         }
     }
 
+    @Transactional
     public void registerSuccess(String tenantScopedLogin) {
-        attempts.remove(key(tenantScopedLogin));
+        for (IamUser user : resolveUsers(tenantScopedLogin)) {
+            user.clearLockoutState();
+            iamUserRepository.save(user);
+        }
     }
 
     private static String key(String login) {
@@ -48,17 +60,27 @@ public class LoginLockoutService {
         return login.trim().toLowerCase(Locale.ROOT);
     }
 
-    private static final class AttemptWindow {
-        private Instant windowStartedAt = Instant.now();
-        private int failures;
-        private Instant lockedUntil;
-
-        private void resetWindowIfElapsed() {
-            if (windowStartedAt.plus(WINDOW).isBefore(Instant.now())) {
-                windowStartedAt = Instant.now();
-                failures = 0;
-                lockedUntil = null;
+    private List<IamUser> resolveUsers(String tenantScopedLogin) {
+        String normalized = key(tenantScopedLogin);
+        int separator = normalized.indexOf(':');
+        if (separator > 0) {
+            String tenantRaw = normalized.substring(0, separator);
+            String email = normalized.substring(separator + 1);
+            try {
+                UUID tenantId = UUID.fromString(tenantRaw);
+                Optional<IamUser> user = iamUserRepository.findByEmailAndTenantId(email, tenantId);
+                return user.map(List::of).orElse(List.of());
+            } catch (IllegalArgumentException ignored) {
+                // Fall back to global email lookup when tenant prefix is malformed.
             }
+        }
+        return iamUserRepository.findByEmail(normalized);
+    }
+
+    private static void resetWindowIfElapsed(IamUser user, Instant now) {
+        Instant reference = user.getUpdatedAt();
+        if (reference != null && reference.plus(WINDOW).isBefore(now)) {
+            user.clearLockoutState();
         }
     }
 }

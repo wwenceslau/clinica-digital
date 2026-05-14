@@ -96,8 +96,8 @@ public class CreateProfile20UserService {
      * @throws IllegalArgumentException    if any input fails format validation
      * @throws EmailAlreadyTakenException  if email is already registered in the same tenant
      */
-    @Transactional
-    public CreateProfile20UserResult create(
+        @Transactional
+        public CreateProfile20UserResult create(
             UUID tenantId,
             UUID organizationId,
             UUID locationId,
@@ -107,6 +107,27 @@ public class CreateProfile20UserService {
             String password,
             String roleCode,
             UUID adminUserId) {
+        return create(tenantId, organizationId, locationId, displayName, email, cpf, password, roleCode, adminUserId,
+            null, null, null, null, null, null);
+        }
+
+        @Transactional
+        public CreateProfile20UserResult create(
+            UUID tenantId,
+            UUID organizationId,
+            UUID locationId,
+            String displayName,
+            String email,
+            String cpf,
+            String password,
+            String roleCode,
+            UUID adminUserId,
+            String fhirTelecomJson,
+            String fhirAddressJson,
+            String fhirGender,
+            java.time.LocalDate fhirBirthDate,
+            String fhirQualificationJson,
+            String fhirCommunicationJson) {
 
         // ── 1. Input validation ───────────────────────────────────────────────
         validateInputs(displayName, email, cpf, password, roleCode, locationId);
@@ -129,15 +150,21 @@ public class CreateProfile20UserService {
                 "[{\"use\":\"official\",\"text\":\"" + sanitize(displayName) + "\"}]";
 
         Practitioner practitioner = new Practitioner(
-                practitionerId,
-                tenantId,
-                "practitioner-" + practitionerId,
-                practitionerFhirMetaProfile,
-                practitionerFhirIdentifierJson,
-                practitionerFhirNameJson,
-                displayName,
-                encryptedCpf.cipherText(),
-                encryptedCpf.keyVersion());
+            practitionerId,
+            tenantId,
+            "practitioner-" + practitionerId,
+            practitionerFhirMetaProfile,
+            practitionerFhirIdentifierJson,
+            practitionerFhirNameJson,
+            displayName,
+            encryptedCpf.cipherText(),
+            encryptedCpf.keyVersion());
+        if (fhirTelecomJson != null) practitioner.setFhirTelecomJson(fhirTelecomJson);
+        if (fhirAddressJson != null) practitioner.setFhirAddressJson(fhirAddressJson);
+        if (fhirGender != null) practitioner.setFhirGender(fhirGender);
+        if (fhirBirthDate != null) practitioner.setFhirBirthDate(fhirBirthDate);
+        if (fhirQualificationJson != null) practitioner.setFhirQualificationJson(fhirQualificationJson);
+        if (fhirCommunicationJson != null) practitioner.setFhirCommunicationJson(fhirCommunicationJson);
         practitionerRepository.save(practitioner);
 
         // ── 4. Create IamUser (profile=20) ────────────────────────────────────

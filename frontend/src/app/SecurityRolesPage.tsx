@@ -23,7 +23,6 @@ import {
   Divider,
   IconButton,
   List,
-  ListItem,
   ListItemButton,
   ListItemText,
   Paper,
@@ -31,15 +30,20 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Security as SecurityIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Refresh as RefreshIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Security as SecurityIcon } from '@mui/icons-material';
 import {
-  listGroups,
-  createGroup,
-  listGroupPermissions,
-  listPermissions,
   assignPermissionToGroup,
+  createGroup,
+  deleteGroup,
+  listGroupMembers,
+  listGroupPermissions,
+  listGroups,
+  listPermissions,
+  removePermissionFromGroup,
+  removeUserFromGroup,
   type IamGroup,
   type IamPermission,
+  type IamUser,
 } from '../services/iamGroupApi';
 import { useAuth } from '../context/AuthContext';
 
@@ -53,6 +57,7 @@ export function SecurityRolesPage(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [groupPermissions, setGroupPermissions] = useState<Record<string, IamPermission[]>>({});
+  const [groupMembers, setGroupMembers] = useState<Record<string, IamUser[]>>({});
   const [allPermissions, setAllPermissions] = useState<IamPermission[]>([]);
 
   // Create group dialog
@@ -102,6 +107,11 @@ export function SecurityRolesPage(): React.ReactElement {
         .then((perms) => setGroupPermissions((prev) => ({ ...prev, [groupId]: perms })))
         .catch(() => setGroupPermissions((prev) => ({ ...prev, [groupId]: [] })));
     }
+    if (!groupMembers[groupId]) {
+      listGroupMembers(tenantId, sessionId, groupId)
+        .then((members) => setGroupMembers((prev) => ({ ...prev, [groupId]: members })))
+        .catch(() => setGroupMembers((prev) => ({ ...prev, [groupId]: [] })));
+    }
   }
 
   async function handleCreateGroup(e: React.FormEvent) {
@@ -142,6 +152,48 @@ export function SecurityRolesPage(): React.ReactElement {
       setAddPermError('Erro ao adicionar permissão.');
     } finally {
       setAddingPerm(false);
+    }
+  }
+
+  async function handleRemovePermission(groupId: string, permissionId: string) {
+    try {
+      await removePermissionFromGroup(tenantId, sessionId, groupId, permissionId);
+      const updated = await listGroupPermissions(tenantId, sessionId, groupId);
+      setGroupPermissions((prev) => ({ ...prev, [groupId]: updated }));
+    } catch {
+      setError('Erro ao remover permissão do grupo.');
+    }
+  }
+
+  async function handleRemoveMember(groupId: string, userId: string) {
+    try {
+      await removeUserFromGroup(tenantId, sessionId, groupId, userId);
+      const updated = await listGroupMembers(tenantId, sessionId, groupId);
+      setGroupMembers((prev) => ({ ...prev, [groupId]: updated }));
+    } catch {
+      setError('Erro ao remover membro do grupo.');
+    }
+  }
+
+  async function handleDeleteGroup(groupId: string) {
+    try {
+      await deleteGroup(tenantId, sessionId, groupId);
+      setGroups((prev) => prev.filter((g) => g.groupId !== groupId));
+      setGroupPermissions((prev) => {
+        const next = { ...prev };
+        delete next[groupId];
+        return next;
+      });
+      setGroupMembers((prev) => {
+        const next = { ...prev };
+        delete next[groupId];
+        return next;
+      });
+      if (expandedGroup === groupId) {
+        setExpandedGroup(null);
+      }
+    } catch {
+      setError('Erro ao excluir grupo.');
     }
   }
 
@@ -196,6 +248,17 @@ export function SecurityRolesPage(): React.ReactElement {
                   >
                     + Permissão
                   </Button>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteGroup(group.groupId);
+                    }}
+                    aria-label="Excluir grupo"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
                   {expandedGroup === group.groupId ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 </ListItemButton>
                 <Collapse in={expandedGroup === group.groupId} timeout="auto" unmountOnExit>
@@ -217,6 +280,28 @@ export function SecurityRolesPage(): React.ReactElement {
                             variant="outlined"
                             color="primary"
                             title={p.description ?? p.code}
+                            onDelete={() => handleRemovePermission(group.groupId, p.permissionId)}
+                          />
+                        ))}
+                      </Box>
+                    )}
+
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, mt: 2 }}>
+                      Membros:
+                    </Typography>
+                    {(groupMembers[group.groupId] ?? []).length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        Nenhum membro no grupo.
+                      </Typography>
+                    ) : (
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        {(groupMembers[group.groupId] ?? []).map((m) => (
+                          <Chip
+                            key={m.userId}
+                            label={m.email || m.username}
+                            size="small"
+                            variant="outlined"
+                            onDelete={() => handleRemoveMember(group.groupId, m.userId)}
                           />
                         ))}
                       </Box>

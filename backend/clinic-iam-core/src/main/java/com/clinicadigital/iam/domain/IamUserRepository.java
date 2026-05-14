@@ -6,6 +6,10 @@ import java.util.UUID;
 
 public interface IamUserRepository {
 
+    List<IamUser> findAll();
+
+    Optional<IamUser> findById(UUID id);
+
     Optional<IamUser> findByIdAndTenantId(UUID id, UUID tenantId);
 
     Optional<IamUser> findByEmailAndTenantId(String email, UUID tenantId);
@@ -38,4 +42,7 @@ public interface IamUserRepository {
      * Returns all iam_users belonging to the given tenant, ordered by creation date.
      */
     List<IamUser> findByTenantId(UUID tenantId);
+
+    /** Deletes a user by id. No-op if the user does not exist. */
+    void delete(UUID id);
 }

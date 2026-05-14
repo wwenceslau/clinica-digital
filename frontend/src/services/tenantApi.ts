@@ -18,12 +18,24 @@ export interface TenantDto {
   adminDisplayName?: string;
   adminEmail?: string;
   adminCpf?: string;
+  orgFhirTypeJson?: string | null;
+  orgFhirAliasJson?: string | null;
+  orgFhirTelecomJson?: string | null;
+  orgFhirAddressJson?: string | null;
+  orgFhirPartOfOrgId?: string | null;
+  orgFhirEndpointRefsJson?: string | null;
 }
 
 export interface CreateTenantRequest {
   organization: {
     displayName: string;
     cnes: string;
+    fhirTypeJson?: string;
+    fhirAliasJson?: string;
+    fhirTelecomJson?: string;
+    fhirAddressJson?: string;
+    fhirPartOfOrgId?: string;
+    fhirEndpointRefsJson?: string;
   };
   adminPractitioner: {
     displayName: string;
@@ -54,6 +66,12 @@ export interface UpdateTenantRequest {
   organization: {
     displayName: string;
     cnes: string;
+    fhirTypeJson?: string;
+    fhirAliasJson?: string;
+    fhirTelecomJson?: string;
+    fhirAddressJson?: string;
+    fhirPartOfOrgId?: string;
+    fhirEndpointRefsJson?: string;
   };
   adminPractitioner: {
     displayName: string;

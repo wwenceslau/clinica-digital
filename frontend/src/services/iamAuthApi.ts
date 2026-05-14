@@ -267,6 +267,12 @@ export interface CreateProfile20UserRequest {
     email: string;
     cpf: string;
     password: string;
+    fhirTelecomJson?: string;
+    fhirAddressJson?: string;
+    fhirGender?: string;
+    fhirBirthDate?: string;
+    fhirQualificationJson?: string;
+    fhirCommunicationJson?: string;
   };
   locationId: string;
   roleCode: string;
@@ -286,11 +292,12 @@ export interface CreateProfile20UserResponse {
  * Refs: FR-006, FR-009, FR-011
  */
 export async function createProfile20User(
+  tenantId: string,
   request: CreateProfile20UserRequest,
 ): Promise<CreateProfile20UserResponse> {
   const response = await fetch('/api/admin/users', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
     credentials: 'include',
     body: JSON.stringify(request),
   });

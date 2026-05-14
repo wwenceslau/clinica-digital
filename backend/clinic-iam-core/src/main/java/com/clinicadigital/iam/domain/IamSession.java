@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -24,6 +25,9 @@ public class IamSession {
 
     @Column(name = "tenant_id")
     private UUID tenantId;
+
+    @Column(name = "organization_id")
+    private UUID organizationId;
 
     @Column(name = "iam_user_id", nullable = false)
     private UUID userId;
@@ -52,8 +56,17 @@ public class IamSession {
     @Column(name = "trace_id")
     private String traceId;
 
+    @Column(name = "opaque_token_digest")
+    private String opaqueTokenDigest;
+
+    @Column(name = "revocation_reason")
+    private String revocationReason;
+
     @Column(name = "active_practitioner_role_id")
     private UUID activePractitionerRoleId;
+
+    @Transient
+    private UUID opaqueToken;
 
     protected IamSession() {
         // JPA constructor
@@ -62,20 +75,24 @@ public class IamSession {
     public IamSession(
             UUID id,
             UUID tenantId,
+            UUID organizationId,
             UUID userId,
             Instant issuedAt,
             Instant expiresAt,
             Instant revokedAt,
             String traceId,
+            String opaqueTokenDigest,
             String clientIp,
             String userAgent) {
         this.id = id;
         this.tenantId = tenantId;
+        this.organizationId = organizationId;
         this.userId = userId;
         this.issuedAt = issuedAt;
         this.expiresAt = expiresAt;
         this.revokedAt = revokedAt;
         this.traceId = traceId;
+        this.opaqueTokenDigest = opaqueTokenDigest;
         this.clientIp = clientIp;
         this.userAgent = userAgent;
     }
@@ -83,12 +100,14 @@ public class IamSession {
     public IamSession(
             UUID id,
             UUID tenantId,
+            UUID organizationId,
             UUID userId,
             Instant issuedAt,
             Instant expiresAt,
             Instant revokedAt,
-            String traceId) {
-        this(id, tenantId, userId, issuedAt, expiresAt, revokedAt, traceId, null, null);
+            String traceId,
+            String opaqueTokenDigest) {
+        this(id, tenantId, organizationId, userId, issuedAt, expiresAt, revokedAt, traceId, opaqueTokenDigest, null, null);
     }
 
     /**
@@ -128,6 +147,10 @@ public class IamSession {
         return tenantId;
     }
 
+    public UUID organizationId() {
+        return organizationId;
+    }
+
     public UUID userId() {
         return userId;
     }
@@ -154,6 +177,26 @@ public class IamSession {
 
     public String traceId() {
         return traceId;
+    }
+
+    public String opaqueTokenDigest() {
+        return opaqueTokenDigest;
+    }
+
+    public String revocationReason() {
+        return revocationReason;
+    }
+
+    public UUID opaqueToken() {
+        return opaqueToken;
+    }
+
+    public void setOpaqueToken(UUID opaqueToken) {
+        this.opaqueToken = opaqueToken;
+    }
+
+    public void setRevocationReason(String revocationReason) {
+        this.revocationReason = revocationReason;
     }
 
     public UUID activePractitionerRoleId() {

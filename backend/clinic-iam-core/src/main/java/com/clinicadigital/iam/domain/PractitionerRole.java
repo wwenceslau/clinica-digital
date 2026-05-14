@@ -72,6 +72,14 @@ public class PractitionerRole {
     @Column(name = "fhir_specialty_json", columnDefinition = "jsonb")
     private String fhirSpecialtyJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_telecom_json", columnDefinition = "jsonb")
+    private String fhirTelecomJson;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "fhir_available_time_json", columnDefinition = "jsonb")
+    private String fhirAvailableTimeJson;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -120,13 +128,58 @@ public class PractitionerRole {
     public UUID getLocationId() { return locationId; }
     public UUID getPractitionerId() { return practitionerId; }
     public String getFhirResourceId() { return fhirResourceId; }
+    public String getFhirMetaProfile() { return fhirMetaProfile; }
     public String getRoleCode() { return roleCode; }
     public boolean isActive() { return active; }
     public boolean isPrimaryRole() { return primaryRole; }
     public Instant getPeriodStart() { return periodStart; }
     public Instant getPeriodEnd() { return periodEnd; }
+    public String getFhirCodeJson() { return fhirCodeJson; }
+    public String getFhirSpecialtyJson() { return fhirSpecialtyJson; }
+    public String getFhirTelecomJson() { return fhirTelecomJson; }
+    public String getFhirAvailableTimeJson() { return fhirAvailableTimeJson; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+
+    public void setLocationId(UUID locationId) {
+        this.locationId = locationId;
+    }
+
+    public void setRoleCode(String roleCode) {
+        this.roleCode = roleCode;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void setPrimaryRole(boolean primaryRole) {
+        this.primaryRole = primaryRole;
+    }
+
+    public void setPeriodStart(Instant periodStart) {
+        this.periodStart = periodStart;
+    }
+
+    public void setPeriodEnd(Instant periodEnd) {
+        this.periodEnd = periodEnd;
+    }
+
+    public void setFhirCodeJson(String fhirCodeJson) {
+        this.fhirCodeJson = fhirCodeJson;
+    }
+
+    public void setFhirSpecialtyJson(String fhirSpecialtyJson) {
+        this.fhirSpecialtyJson = fhirSpecialtyJson;
+    }
+
+    public void setFhirTelecomJson(String fhirTelecomJson) {
+        this.fhirTelecomJson = fhirTelecomJson;
+    }
+
+    public void setFhirAvailableTimeJson(String fhirAvailableTimeJson) {
+        this.fhirAvailableTimeJson = fhirAvailableTimeJson;
+    }
 
     @Override
     public boolean equals(Object other) {

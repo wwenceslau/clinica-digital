@@ -145,7 +145,8 @@ public class CreateTenantAdminService {
                 tenantId, slug, tenantName);
 
         // ── 5. Create Organization ────────────────────────────────────────────
-        UUID organizationId = UUID.randomUUID();
+        // organizationId MUST equal tenantId to satisfy V203 CHECK (tenant_id = id)
+        UUID organizationId = tenantId;
         String orgFhirMetaProfile = "[\"" + RNDS_ORG_PROFILE + "\"]";
         String orgFhirIdentifierJson = "[{\"system\":\"" + CNES_SYSTEM + "\",\"value\":\"" + cnes + "\"}]";
 

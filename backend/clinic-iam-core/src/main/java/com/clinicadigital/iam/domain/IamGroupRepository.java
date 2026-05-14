@@ -26,6 +26,12 @@ public interface IamGroupRepository {
     void assignPermission(UUID groupId, UUID permissionId);
 
     /**
+     * Removes a permission from a group.
+     * No-op if the association does not exist.
+     */
+    void removePermission(UUID groupId, UUID permissionId);
+
+    /**
      * Assigns a user to a group by inserting into {@code iam_user_groups}.
      * No-op if the association already exists.
      *
@@ -36,6 +42,12 @@ public interface IamGroupRepository {
     void assignUser(UUID userId, UUID groupId, UUID assignedBy);
 
     /**
+     * Removes a user from a group.
+     * No-op if the association does not exist.
+     */
+    void removeUser(UUID userId, UUID groupId);
+
+    /**
      * Returns all permissions assigned to a group.
      */
     List<IamPermission> findPermissionsByGroupId(UUID groupId);
@@ -44,4 +56,16 @@ public interface IamGroupRepository {
      * Returns all permissions accessible to a user (union of all groups the user belongs to).
      */
     List<IamPermission> findPermissionsByUserId(UUID userId);
+
+    /**
+     * Returns all users assigned to a group.
+     */
+    List<IamUser> findUsersByGroupId(UUID groupId);
+
+    /**
+     * Deletes a group in tenant scope.
+     *
+     * @return true when the group existed and was deleted.
+     */
+    boolean deleteByIdAndTenantId(UUID groupId, UUID tenantId);
 }

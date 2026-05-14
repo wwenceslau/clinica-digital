@@ -52,4 +52,16 @@ class OrganizationRepositoryJpa implements OrganizationRepository {
                 .getResultList()
                 .isEmpty();
     }
+
+    @Override
+    public Optional<Organization> findFirstByTenantId(UUID tenantId) {
+        return em.createQuery(
+                        "SELECT o FROM Organization o WHERE o.tenantId = :tenantId ORDER BY o.createdAt ASC",
+                        Organization.class)
+                .setParameter("tenantId", tenantId)
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
 }

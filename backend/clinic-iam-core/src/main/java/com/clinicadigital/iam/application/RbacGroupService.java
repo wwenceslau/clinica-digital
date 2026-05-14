@@ -135,6 +135,23 @@ public class RbacGroupService {
     }
 
     /**
+     * Removes a permission from a group.
+     *
+     * @throws NoSuchElementException if group does not belong to the tenant.
+     */
+    @Transactional
+    public void removePermissionFromGroup(UUID tenantId, UUID groupId, UUID permissionId, UUID adminUserId) {
+        requireRbacManage(tenantId, adminUserId);
+        groupRepository.findByIdAndTenantId(groupId, tenantId)
+                .orElseThrow(() -> new NoSuchElementException("group.not.found"));
+
+        groupRepository.removePermission(groupId, permissionId);
+
+        auditService.logAuthEvent(tenantId, adminUserId, "iam.group.permission.removed", "success",
+                null, "{\"groupId\":\"" + groupId + "\",\"permissionId\":\"" + permissionId + "\"}");
+    }
+
+    /**
      * Assigns a user to a group.
      *
      * @throws NoSuchElementException if group does not belong to the tenant.
@@ -149,6 +166,61 @@ public class RbacGroupService {
 
         auditService.logAuthEvent(tenantId, adminUserId, "iam.group.user.assigned", "success",
                 null, "{\"groupId\":\"" + groupId + "\",\"userId\":\"" + userId + "\"}");
+    }
+
+    /**
+     * Removes a user from a group.
+     *
+     * @throws NoSuchElementException if group does not belong to the tenant.
+     */
+    @Transactional
+    public void removeUserFromGroup(UUID tenantId, UUID groupId, UUID userId, UUID adminUserId) {
+        requireRbacManage(tenantId, adminUserId);
+        groupRepository.findByIdAndTenantId(groupId, tenantId)
+                .orElseThrow(() -> new NoSuchElementException("group.not.found"));
+
+        groupRepository.removeUser(userId, groupId);
+
+        auditService.logAuthEvent(tenantId, adminUserId, "iam.group.user.removed", "success",
+                null, "{\"groupId\":\"" + groupId + "\",\"userId\":\"" + userId + "\"}");
+    }
+
+    /**
+     * Returns all users assigned to a group in tenant scope.
+     *
+     * @throws NoSuchElementException if group does not belong to the tenant.
+     */
+    @Transactional(readOnly = true)
+    public List<IamUserResult> listGroupMembers(UUID tenantId, UUID groupId) {
+        groupRepository.findByIdAndTenantId(groupId, tenantId)
+                .orElseThrow(() -> new NoSuchElementException("group.not.found"));
+
+        return groupRepository.findUsersByGroupId(groupId).stream()
+                .filter(u -> tenantId.equals(u.getTenantId()))
+                .map(u -> new IamUserResult(
+                        u.getId(),
+                        u.getUsername(),
+                        u.getEmail(),
+                        u.getProfile(),
+                        u.isActive()))
+                .toList();
+    }
+
+    /**
+     * Deletes a tenant-scoped group and its associations.
+     *
+     * @throws NoSuchElementException if group does not belong to the tenant.
+     */
+    @Transactional
+    public void deleteGroup(UUID tenantId, UUID groupId, UUID adminUserId) {
+        requireRbacManage(tenantId, adminUserId);
+
+        if (!groupRepository.deleteByIdAndTenantId(groupId, tenantId)) {
+            throw new NoSuchElementException("group.not.found");
+        }
+
+        auditService.logAuthEvent(tenantId, adminUserId, "iam.group.deleted", "success",
+                null, "{\"groupId\":\"" + groupId + "\"}");
     }
 
     /**
@@ -175,4 +247,6 @@ public class RbacGroupService {
     public record IamGroupResult(UUID groupId, UUID tenantId, String name, String description) {}
 
     public record IamPermissionResult(UUID permissionId, String code, String resource, String action, String description) {}
+
+        public record IamUserResult(UUID userId, String username, String email, int profile, boolean active) {}
 }

@@ -16,6 +16,76 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Admin creates profile 20 user', () => {
   test('successful user creation shows confirmation', async ({ page }) => {
+    await page.route('**/api/admin/locations', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'loc-001',
+            tenantId: 'tenant-001',
+            organizationId: 'org-001',
+            displayName: 'Unidade Centro',
+            fhirName: 'Unidade Centro',
+            fhirStatus: 'active',
+            fhirMode: 'instance',
+            accountActive: true,
+          },
+          {
+            id: 'loc-002',
+            tenantId: 'tenant-001',
+            organizationId: 'org-001',
+            displayName: 'Unidade Sul',
+            fhirName: 'Unidade Sul',
+            fhirStatus: 'active',
+            fhirMode: 'instance',
+            accountActive: true,
+          },
+        ]),
+      });
+    });
+
+    await page.route('**/api/admin/practitioner-roles', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'role-001',
+            tenantId: 'tenant-001',
+            organizationId: 'org-001',
+            locationId: 'loc-001',
+            practitionerId: 'pr-001',
+            roleCode: 'CBO-251510',
+            active: true,
+            primaryRole: true,
+            periodStart: null,
+            periodEnd: null,
+            fhirCodeJson: null,
+            fhirSpecialtyJson: null,
+            fhirTelecomJson: null,
+            fhirAvailableTimeJson: null,
+          },
+          {
+            id: 'role-002',
+            tenantId: 'tenant-001',
+            organizationId: 'org-001',
+            locationId: 'loc-002',
+            practitionerId: 'pr-002',
+            roleCode: 'CBO-223505',
+            active: true,
+            primaryRole: false,
+            periodStart: null,
+            periodEnd: null,
+            fhirCodeJson: null,
+            fhirSpecialtyJson: null,
+            fhirTelecomJson: null,
+            fhirAvailableTimeJson: null,
+          },
+        ]),
+      });
+    });
+
     await page.route('**/api/admin/users', (route) => {
       route.fulfill({
         status: 201,
@@ -44,6 +114,13 @@ test.describe('Admin creates profile 20 user', () => {
     await page.fill('[name="displayName"], [aria-label*="Nome" i], [placeholder*="nome" i]', 'Dr. Novo Usuario');
     await page.fill('[name="email"], [type="email"]', 'novo@clinica.local');
     await page.fill('[name="cpf"], [aria-label*="CPF" i]', '12345678901');
+
+    await page.getByLabel(/location/i).click();
+    await page.getByRole('option', { name: 'Unidade Sul' }).click();
+
+    await page.getByLabel(/código da função|role code/i).click();
+    await page.getByRole('option', { name: 'CBO-223505' }).click();
+
     await page.fill('[name="password"], [type="password"]', 'S3nha@Novo123');
 
     // Submit the form
@@ -62,6 +139,50 @@ test.describe('Admin creates profile 20 user', () => {
   });
 
   test('duplicate email shows conflict error feedback', async ({ page }) => {
+    await page.route('**/api/admin/locations', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'loc-001',
+            tenantId: 'tenant-001',
+            organizationId: 'org-001',
+            displayName: 'Unidade Centro',
+            fhirName: 'Unidade Centro',
+            fhirStatus: 'active',
+            fhirMode: 'instance',
+            accountActive: true,
+          },
+        ]),
+      });
+    });
+
+    await page.route('**/api/admin/practitioner-roles', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'role-001',
+            tenantId: 'tenant-001',
+            organizationId: 'org-001',
+            locationId: 'loc-001',
+            practitionerId: 'pr-001',
+            roleCode: 'CBO-251510',
+            active: true,
+            primaryRole: true,
+            periodStart: null,
+            periodEnd: null,
+            fhirCodeJson: null,
+            fhirSpecialtyJson: null,
+            fhirTelecomJson: null,
+            fhirAvailableTimeJson: null,
+          },
+        ]),
+      });
+    });
+
     await page.route('**/api/admin/users', (route) => {
       route.fulfill({
         status: 409,

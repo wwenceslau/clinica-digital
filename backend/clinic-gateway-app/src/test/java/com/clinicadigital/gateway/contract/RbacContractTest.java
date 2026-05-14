@@ -298,6 +298,143 @@ class RbacContractTest {
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    /**
+     * T161 Scenario 1: admin removes a permission from a group → 204.
+     *
+     * <p>TDD RED until DELETE /api/admin/groups/{groupId}/permissions/{permissionId}
+     * is implemented in T176.</p>
+     */
+    @Test
+    void adminRemovesPermissionFromGroupReturns204() {
+        UUID tenantId = insertTenant("t161-rm-perm", "Tenant T161 Remove Permission");
+        UUID orgId = insertOrganization(tenantId, "T161001", "Org T161 Remove Permission");
+        UUID adminPractitionerId = insertPractitioner(tenantId, "Admin T161 RP");
+        UUID locationId = insertLocation(tenantId, orgId, "Location T161 RP");
+        UUID adminRoleId = insertPractitionerRole(orgId, adminPractitionerId, locationId, "MD", true);
+        String adminPwHash = passwordService.hashPassword("S3nha@T161RP");
+        UUID adminUserId = insertIamUser(orgId, "admin-rp@t161.local", adminPwHash, adminPractitionerId, 10);
+        UUID sessionId = insertSession(tenantId, adminUserId, adminRoleId);
+
+        UUID groupId = insertGroup(tenantId, "Grupo T161 RP");
+        UUID permissionId = insertPermission("iam.group.permission.remove.t161", "iam.group", "permission.remove");
+        jdbc.update("INSERT INTO iam_group_permissions (group_id, permission_id) VALUES (?, ?)", groupId, permissionId);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/admin/groups/" + groupId + "/permissions/" + permissionId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(buildAuthHeaders(tenantId, sessionId)),
+                String.class);
+
+        assertThat(response.getStatusCode())
+                .as("T161: removing permission from group must return 204")
+                .isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * T161 Scenario 2: admin removes a member from a group → 204.
+     *
+     * <p>TDD RED until DELETE /api/admin/groups/{groupId}/members/{userId}
+     * is implemented in T176.</p>
+     */
+    @Test
+    void adminRemovesMemberFromGroupReturns204() {
+        UUID tenantId = insertTenant("t161-rm-member", "Tenant T161 Remove Member");
+        UUID orgId = insertOrganization(tenantId, "T161002", "Org T161 Remove Member");
+        UUID adminPractitionerId = insertPractitioner(tenantId, "Admin T161 RM");
+        UUID locationId = insertLocation(tenantId, orgId, "Location T161 RM");
+        UUID adminRoleId = insertPractitionerRole(orgId, adminPractitionerId, locationId, "MD", true);
+        String adminPwHash = passwordService.hashPassword("S3nha@T161RM");
+        UUID adminUserId = insertIamUser(orgId, "admin-rm@t161.local", adminPwHash, adminPractitionerId, 10);
+        UUID sessionId = insertSession(tenantId, adminUserId, adminRoleId);
+
+        UUID groupId = insertGroup(tenantId, "Grupo T161 RM");
+        UUID memberPractitionerId = insertPractitioner(tenantId, "Member T161 RM");
+        UUID memberUserId = insertIamUser(orgId, "member-rm@t161.local",
+                passwordService.hashPassword("S3nha@MemberRM"), memberPractitionerId, 20);
+        jdbc.update(
+                "INSERT INTO iam_user_groups (iam_user_id, group_id, assigned_at, assigned_by_user_id) VALUES (?, ?, NOW(), ?)",
+                memberUserId, groupId, adminUserId);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/admin/groups/" + groupId + "/members/" + memberUserId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(buildAuthHeaders(tenantId, sessionId)),
+                String.class);
+
+        assertThat(response.getStatusCode())
+                .as("T161: removing member from group must return 204")
+                .isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * T161 Scenario 3: admin deletes a group → 204.
+     *
+     * <p>TDD RED until DELETE /api/admin/groups/{groupId}
+     * is implemented in T176.</p>
+     */
+    @Test
+    void adminDeletesGroupReturns204() {
+        UUID tenantId = insertTenant("t161-delete-group", "Tenant T161 Delete Group");
+        UUID orgId = insertOrganization(tenantId, "T161003", "Org T161 Delete Group");
+        UUID adminPractitionerId = insertPractitioner(tenantId, "Admin T161 DG");
+        UUID locationId = insertLocation(tenantId, orgId, "Location T161 DG");
+        UUID adminRoleId = insertPractitionerRole(orgId, adminPractitionerId, locationId, "MD", true);
+        String adminPwHash = passwordService.hashPassword("S3nha@T161DG");
+        UUID adminUserId = insertIamUser(orgId, "admin-dg@t161.local", adminPwHash, adminPractitionerId, 10);
+        UUID sessionId = insertSession(tenantId, adminUserId, adminRoleId);
+
+        UUID groupId = insertGroup(tenantId, "Grupo T161 DG");
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/admin/groups/" + groupId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(buildAuthHeaders(tenantId, sessionId)),
+                String.class);
+
+        assertThat(response.getStatusCode())
+                .as("T161: deleting group must return 204")
+                .isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * T161 Scenario 4: admin lists members of a group → 200.
+     *
+     * <p>TDD RED until GET /api/admin/groups/{groupId}/members
+     * is implemented in T176.</p>
+     */
+    @Test
+    void adminListsGroupMembersReturns200() {
+        UUID tenantId = insertTenant("t161-list-members", "Tenant T161 List Members");
+        UUID orgId = insertOrganization(tenantId, "T161004", "Org T161 List Members");
+        UUID adminPractitionerId = insertPractitioner(tenantId, "Admin T161 LM");
+        UUID locationId = insertLocation(tenantId, orgId, "Location T161 LM");
+        UUID adminRoleId = insertPractitionerRole(orgId, adminPractitionerId, locationId, "MD", true);
+        String adminPwHash = passwordService.hashPassword("S3nha@T161LM");
+        UUID adminUserId = insertIamUser(orgId, "admin-lm@t161.local", adminPwHash, adminPractitionerId, 10);
+        UUID sessionId = insertSession(tenantId, adminUserId, adminRoleId);
+
+        UUID groupId = insertGroup(tenantId, "Grupo T161 LM");
+        UUID memberPractitionerId = insertPractitioner(tenantId, "Member T161 LM");
+        UUID memberUserId = insertIamUser(orgId, "member-lm@t161.local",
+                passwordService.hashPassword("S3nha@MemberLM"), memberPractitionerId, 20);
+        jdbc.update(
+                "INSERT INTO iam_user_groups (iam_user_id, group_id, assigned_at, assigned_by_user_id) VALUES (?, ?, NOW(), ?)",
+                memberUserId, groupId, adminUserId);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/admin/groups/" + groupId + "/members",
+                HttpMethod.GET,
+                new HttpEntity<>(buildAuthHeaders(tenantId, sessionId)),
+                String.class);
+
+        assertThat(response.getStatusCode())
+                .as("T161: listing group members must return 200")
+                .isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .as("T161: response must include inserted member")
+                .contains(memberUserId.toString());
+    }
+
     // ---- Helpers ----
 
     private HttpHeaders buildAuthHeaders(UUID tenantId, UUID sessionId) {
@@ -395,4 +532,20 @@ class RbacContractTest {
                 """, id, tenantId, userId, activePractitionerRoleId);
         return id;
     }
+
+        private UUID insertGroup(UUID tenantId, String name) {
+                UUID id = UUID.randomUUID();
+                jdbc.update(
+                                "INSERT INTO iam_groups (id, tenant_id, name, created_at) VALUES (?, ?, ?, NOW())",
+                                id, tenantId, name);
+                return id;
+        }
+
+        private UUID insertPermission(String code, String resource, String action) {
+                UUID id = UUID.randomUUID();
+                jdbc.update(
+                                "INSERT INTO iam_permissions (id, code, resource, action, description) VALUES (?, ?, ?, ?, ?)",
+                                id, code, resource, action, "Permission for T161 contract test");
+                return id;
+        }
 }

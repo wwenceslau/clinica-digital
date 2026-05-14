@@ -12,6 +12,13 @@
 - Q: Devemos fixar URIs explícitas de `meta.profile` RNDS nesta spec? → A: Sim, URIs explícitas e versionadas na spec.
 - Q: Qual política de acesso global do super-user devemos adotar no RLS? → A: Policy RLS explícita e controlada para profile 0, sem bypass fora do banco.
 
+### Session 2026-05-06
+- Q: Como implementar opaque_token_digest para sessões seguras? → A: Digest-based lookup (query `iam_sessions WHERE opaque_token_digest = SHA256(token)`); frontend envia raw token em header `Authorization`; backend computa SHA256 e consulta sessão. Previne replay attacks se DB for comprometido.
+- Q: Qual escopo de expansão de DTOs para endpoints de admin? → A: Complete admin layer (Opção B) — expandir todos os endpoints (usuários, grupos, auditoria, sessões, tenants) com todos os campos recém-mapeados. Garante closura completa da spec 004 ao final da Fase 18, sem deferrals pós-Phase-18.
+- Q: Qual escopo de mapeamento dos campos FHIR opcionais da V203? → A: Opção A com extensão obrigatória de UI: mapear todos os campos FHIR opcionais da V203 nas entidades e DTOs, validar em testes, e concluir também os formulários de UI até o fim da Fase 18 para cobertura funcional completa.
+- Q: Qual prioridade para operações de remoção no RBAC? → A: Opção B — todas as remoções são bloqueantes para fechamento da spec 004 na Fase 18: excluir grupo, remover usuário de grupo e remover permissão de grupo.
+- Q: Qual escopo da gestão de sessões no admin? → A: Opção C — gestão completa: listar sessões por tenant, revogar sessões por admin autorizado, registrar motivo de revogação e exibir trilha de auditoria no frontend sem uso de dados mockados.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### US1 – Bootstrap do Super-User via CLI (P0)
@@ -129,11 +136,14 @@ Como gestor institucional, desejo que o profissional autenticado atue em uma uni
 	- O campo de login NÃO deve mais aceitar nome ou CNES diretamente, apenas email.
 - **FR-005**: O sistema DEVE permitir granularidade de permissões via profiles: 0 (super-user), 10 (admin), 20 (user), reservando o range para futuros perfis.
 - **FR-006**: O sistema DEVE permitir que administradores (profile 10) criem grupos/permissões customizadas e atribuam usuários (profile 20) a esses grupos, exibindo todas as permissões disponíveis para cada página/funcionalidade.
-- **FR-007**: O contexto do tenant_id DEVE ser capturado após a seleção da organização e persistido em sessão opaca com armazenamento server-side (tabela `iam_sessions`) para profiles 10 e 20. A validação do tenant_id deve ser feita via consulta à sessão (token opaco como chave lookup) em todas as rotas protegidas (ver spec/002 e spec/003).
+	- Para fechamento da spec 004 na Fase 18, o ciclo RBAC DEVE estar completo, incluindo remoção de usuário de grupo, remoção de permissão de grupo e exclusão de grupo via API e UI administrativa.
+- **FR-007**: O contexto do tenant_id DEVE ser capturado após a seleção da organização e persistido em sessão opaca com armazenamento server-side (tabela `iam_sessions`) para profiles 10 e 20. A validação do tenant_id deve ser feita via consulta à sessão (token opaco com digest como chave lookup) em todas as rotas protegidas (ver spec/002 e spec/003).
+	- O token opaco raw gerado no servidor DEVE ser enviado ao cliente via response HTTP (post-login). O seu digest SHA256 DEVE ser armazenado em `iam_sessions.opaque_token_digest` para prevenir replay attacks caso o DB seja comprometido.
 	- O token opaco DEVE ser persistido prioritariamente em cookie seguro (`Secure`, `HttpOnly`, `SameSite=Lax`) no ambiente web.
 	- Em ambientes de desenvolvimento sem cookie seguro disponível, a persistência DEVE ocorrer apenas em memória de sessão (sem `localStorage`).
-	- O backend DEVE validar token opaco consultando `iam_sessions.id = token AND iam_sessions.active = true AND iam_sessions.expires_at > now()` antes de permitir acesso.
+	- O backend DEVE validar token opaco consultando `iam_sessions.opaque_token_digest = SHA256(token_received) AND iam_sessions.active = true AND iam_sessions.expires_at > now()` antes de permitir acesso, usando constant-time comparison para SHA256 antes de consulta DB.
 	- O frontend DEVE encaminhar o token opaco (via cookie automático ou header Authorization) para o middleware de contexto multi-tenant antes de chamadas protegidas.
+	- O domínio administrativo DEVE prover gestão completa de sessões: listagem por tenant, revogação por admin autorizado e persistência de `revocation_reason` com auditoria; o frontend DEVE consumir API real para histórico e revogação (sem dados mockados).
 - **FR-008**: Após login, o practitioner logado e a location ativa DEVEM ser exibidos no header do Shell.
 - **FR-009**: Erros de autenticação/validação DEVEM ser retornados como FHIR OperationOutcome e renderizados como alertas visuais (Toast/Alert MUI 7).
 	- O payload DEVE conter `issue[].severity`, `issue[].code`, `issue[].details.text` e, quando aplicável, `issue[].diagnostics`.
@@ -143,6 +153,7 @@ Como gestor institucional, desejo que o profissional autenticado atue em uma uni
 	- O entrypoint DEVE carregar o PractitionerRole ativo após login e injetar no contexto consumido pelo Shell.
 	- Rotas não autenticadas DEVEM fazer fallback para a página de login.
 - **FR-013**: Os formulários de Login e Registro DEVEM ser implementados como moléculas/organismos, usando MUI 7 e Tailwind, seguindo o padrão atômico.
+	- Até o fechamento da Fase 18, os formulários administrativos de Organization, Location, Practitioner e PractitionerRole DEVEM estar completos para captura/edição dos campos FHIR opcionais mapeados na V203, com validações e feedback visual padronizado.
 - **FR-014**: O sistema DEVE aplicar PostgreSQL RLS nas tabelas de IAM.
 	- O isolamento por tenant DEVE ser aplicado explicitamente nas tabelas de Organization, Practitioner, Location, PractitionerRole, iam_users e iam_sessions.
 	- O profile 0 DEVE usar política de acesso global controlada por RLS (ex.: `USING true` condicionada a role/contexto de sessão), sem bypass na camada de aplicação.
@@ -187,7 +198,7 @@ Se houver atualização na constituição, esta spec deve ser revisada para gara
 - **practitioners (persistência)**: inclui campos canônicos FHIR (`fhir_*`) e campos de aplicação `display_name`, `email`, `profile`, `account_active`, credenciais seguras.
 - **practitioner_roles (persistência)**: inclui tenant_id, organization_id, location_id, practitioner_id, role_code, active, period_start, period_end.
 - **iam_users**: Tabela canônica de identidade interna (sem IdP externo), com tenant_id opcional (nulo para profile 0), email único por tenant, `password_hash` (Argon2id/bcrypt), e status de conta.
-- **iam_sessions**: Tabela canônica de sessão interna com RLS, campos mínimos: id, iam_user_id, opaque_token_ref, issued_at, expires_at, revoked_at, active.
+- **iam_sessions**: Tabela canônica de sessão interna com RLS, campos mínimos: id, iam_user_id, opaque_token_digest, issued_at, expires_at, revoked_at, active.
 
 ## Integração Frontend-Backend (Costura Final)
 

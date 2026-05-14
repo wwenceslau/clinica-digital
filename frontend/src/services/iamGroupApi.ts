@@ -23,6 +23,13 @@ export interface IamPermission {
   description: string | null;
 }
 
+export interface IamUser {
+  userId: string;
+  tenantId: string;
+  email: string;
+  username: string;
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (res.ok) {
     return res.json() as Promise<T>;
@@ -102,6 +109,64 @@ export async function assignPermissionToGroup(
     const body = await res.text();
     throw { status: res.status, body };
   }
+}
+
+export async function removePermissionFromGroup(
+  tenantId: string,
+  sessionId: string,
+  groupId: string,
+  permissionId: string,
+): Promise<void> {
+  const res = await fetch(`/api/admin/groups/${groupId}/permissions/${permissionId}`, {
+    method: 'DELETE',
+    headers: authHeaders(tenantId, sessionId),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw { status: res.status, body };
+  }
+}
+
+export async function removeUserFromGroup(
+  tenantId: string,
+  sessionId: string,
+  groupId: string,
+  userId: string,
+): Promise<void> {
+  const res = await fetch(`/api/admin/groups/${groupId}/members/${userId}`, {
+    method: 'DELETE',
+    headers: authHeaders(tenantId, sessionId),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw { status: res.status, body };
+  }
+}
+
+export async function deleteGroup(
+  tenantId: string,
+  sessionId: string,
+  groupId: string,
+): Promise<void> {
+  const res = await fetch(`/api/admin/groups/${groupId}`, {
+    method: 'DELETE',
+    headers: authHeaders(tenantId, sessionId),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw { status: res.status, body };
+  }
+}
+
+export async function listGroupMembers(
+  tenantId: string,
+  sessionId: string,
+  groupId: string,
+): Promise<IamUser[]> {
+  const res = await fetch(`/api/admin/groups/${groupId}/members`, {
+    headers: authHeaders(tenantId, sessionId),
+  });
+  return handleResponse<IamUser[]>(res);
 }
 
 export async function listGroupPermissions(
